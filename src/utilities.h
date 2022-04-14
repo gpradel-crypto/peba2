@@ -9,8 +9,8 @@
 #include <chrono>
 #include <vector>
 
-constexpr double LOWER_BOUND = -10.0;
-constexpr double UPPER_BOUND = 10.0;
+constexpr double LOWER_BOUND = -1.0;
+constexpr double UPPER_BOUND = 1.0;
 
 class Stopwatch
 {

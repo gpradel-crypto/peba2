@@ -10,30 +10,52 @@
 using namespace std;
 using namespace seal;
 
-const int DIMENSION = 16;
 
 int main () {
 
+    
     /*
      *  Precomputation phase
      */
+    cout << "  ----------- Precomputation phase --------------" << endl;
 
     // Client side
 
     //Creation of the keys
     // Seal encryption set up
     EncryptionParameters parms(scheme_type::ckks);
-    size_t poly_modulus_degree = 4096;
+    size_t poly_modulus_degree = 4096; // power of 2 available: 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
     parms.set_poly_modulus_degree(poly_modulus_degree);
     parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {39, 30, 40}));
+    //parms.set_poly_modulus_degree(poly_modulus_degree);
+    //parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {49, 40, 40, 40, 49}));
+    //parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {50, 50, 40, 40, 40 , 40, 40, 40, 40, 50})); // for big modulus
 
+
+    //Number of rescaling allowed (amount of multiplication that are possible)
+    const vector<int> bitsizes = {39, 30, 40};
+//    const vector<int> bitsizes = {50, 50, 40, 40, 40 , 40, 40, 40, 40, 50};
+//    const vector<int> bitsizes = {49, 40, 40, 40, 49};
+    u_int nb_rescaling = bitsizes.size() - 2;
+    //Slot dimension
+    const size_t dimension = poly_modulus_degree/2;
     //scale for encoding
-    double scale = pow(2.0, 30);
+    int power_of_scale = 30;
+    double scale = pow(2.0, power_of_scale);
+
 
     // Seal context set up, this checks if the parameters make sense
+    cout << "\t\t --- Information about computations ---" << endl;
     SEALContext context(parms);
     print_parameters(context);
-    cout << "Maximal allowed coeff_modulus bit-count for this poly_modulus_degree " << CoeffModulus::MaxBitCount(poly_modulus_degree) << endl;
+    cout << "|    Scale: 2^" << power_of_scale << endl;
+    cout << "|    Number of rescaling allowed: " << nb_rescaling << endl;
+    cout << "\\" << std::endl << std::endl;
+    cout << "Dimension of the vector of inputs: " << dimension << endl;
+//    cout << "The vectors of inputs are filled with doubles between " << LOWER_BOUND << " and " << UPPER_BOUND << endl;
+//    cout << "The vectors of inputs are filled with doubles between " << exp(LOWER_BOUND) << " and " << exp(UPPER_BOUND) << endl;
+//    cout << "The vectors of inputs are filled with doubles between " << -exp(LOWER_BOUND) << " and " << -exp(UPPER_BOUND) << endl;
+
 
     //Set up the keys
     KeyGenerator keygen(context);
@@ -79,7 +101,7 @@ int main () {
 //    cout << "Number of slots: " << slot_count << endl;
 
     //Generation of the template
-    vector<double> temp = create_vector_input(DIMENSION);
+    vector<double> temp = create_vector_input(dimension);
     print_vector(temp);
 
     // Encryption of the template
@@ -110,7 +132,7 @@ int main () {
     //Client side
 
     //Generation of the sample
-    vector<double> sample = create_vector_input(DIMENSION);
+    vector<double> sample = create_vector_input(dimension);
     print_vector(sample);
 
     // Encryption of the template
