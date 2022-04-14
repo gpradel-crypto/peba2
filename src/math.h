@@ -18,6 +18,6 @@ void enc_manhattan_dist(const Ciphertext &ct1, const Ciphertext &ct2, Ciphertext
                          Evaluator &evaluator, const GaloisKeys &gal_keys);
 
 void enc_euclidean_dist(const Ciphertext &ct1, const Ciphertext &ct2, Ciphertext &ctdest, CKKSEncoder &encoder,
-                         Evaluator &evaluator, const GaloisKeys &gal_keys, const RelinKeys &relin_keys);
+                         Evaluator &evaluator, const GaloisKeys &gal_keys, const RelinKeys &relin_keys, const double scale);
 
 #endif //THREATS_SEAL_MATH_H

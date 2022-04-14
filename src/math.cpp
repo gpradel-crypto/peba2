@@ -44,7 +44,7 @@ void enc_manhattan_dist(const Ciphertext &ct1, const Ciphertext &ct2, Ciphertext
  * The result is put in ctdest.
  */
 void enc_euclidean_dist(const Ciphertext &ct1, const Ciphertext &ct2, Ciphertext &ctdest, CKKSEncoder &encoder,
-                         Evaluator &evaluator, const GaloisKeys &gal_keys, const RelinKeys &relin_keys) {
+                         Evaluator &evaluator, const GaloisKeys &gal_keys, const RelinKeys &relin_keys, const double scale) {
     evaluator.sub(ct2, ct1, ctdest);
     evaluator.square_inplace(ctdest);
     evaluator.relinearize_inplace(ctdest, relin_keys);
@@ -53,4 +53,8 @@ void enc_euclidean_dist(const Ciphertext &ct1, const Ciphertext &ct2, Ciphertext
         evaluator.rotate_vector(ctdest, i, gal_keys, temp_ct);
         evaluator.add_inplace(ctdest, temp_ct);
     }
+    //rescaling
+    evaluator.relinearize_inplace(ctdest, relin_keys);
+    evaluator.rescale_to_next_inplace(ctdest);
+    ctdest.scale() = scale;
 }

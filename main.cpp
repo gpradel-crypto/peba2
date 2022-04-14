@@ -158,7 +158,7 @@ int main () {
     Ciphertext euc_dist_ct;
     {
         Stopwatch sw("Computation of the euclidean distance between the template and the sample");
-        enc_euclidean_dist(temp_ct, sample_ct, euc_dist_ct, encoder, evaluator, gal_keys, relin_keys);
+        enc_euclidean_dist(temp_ct, sample_ct, euc_dist_ct, encoder, evaluator, gal_keys, relin_keys, scale);
     }
 
     // Server generates the random number Tau
