@@ -155,12 +155,40 @@ int main () {
     //Client sends the sample encrypted to the server
     // Server side
 
-    Ciphertext euc_dist;
+    Ciphertext euc_dist_ct;
     {
         Stopwatch sw("Computation of the euclidean distance between the template and the sample");
-        enc_euclidean_dist(temp_ct, sample_ct, euc_dist, encoder, evaluator, gal_keys, relin_keys);
+        enc_euclidean_dist(temp_ct, sample_ct, euc_dist_ct, encoder, evaluator, gal_keys, relin_keys);
     }
 
+    // Server generates the random number Tau
+    double tau = random_double();
+    // Server creates the plaintext for Tau
+    Plaintext tau_pt;
+    encoder.encode(tau, scale, tau_pt);
+    // Server applies g function
+    evaluator.multiply_plain_inplace(euc_dist_ct, tau_pt);
+    // Save the token y encrypted in a file to send it to client
+    {
+        ofstream fs("token.ct", ios::binary);
+        euc_dist_ct.save(fs);
+    }
+    //Server sends to Client the token
 
+    //Client receives it and decrypts it
+    Plaintext token_pt;
+    decryptor.decrypt(euc_dist_ct, token_pt);
+    vector<double> token;
+    encoder.decode(token_pt, token);
+
+    /*
+     * END OF THE PROTOCOL
+     */
+
+    //verification of the result
+    cout << "Verification if the ciphertext calculation is accurate." << endl;
+    double euc_dist_true = euclidean_distance(temp, sample);
+
+    cout << "The true result is " << euc_dist_true << " and the decrypted result is " << token[0] << endl;
     return 0;
 }
