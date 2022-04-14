@@ -3,7 +3,7 @@
 //
 
 #include <random>
-#include <seal/context.h>
+#include <seal/seal.h>
 #include "utilities.h"
 using namespace std;
 
