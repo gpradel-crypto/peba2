@@ -169,8 +169,8 @@ int main () {
     // Server applies g function
     cout << "Encoding of tau done" << endl;
 
-    cout << "encrypted_ntt is " << euc_dist_ct.parms_id() << endl;
-    cout << "plain_ntt is " << tau_pt.parms_id() << endl;
+    //cout << "encrypted_ntt is " << euc_dist_ct.parms_id() << endl;
+    //cout << "plain_ntt is " << tau_pt.parms_id() << endl;
     evaluator.multiply_plain_inplace(euc_dist_ct, tau_pt);
     cout << "calculation of the token y done" << endl;
     // Save the token y encrypted in a file to send it to client

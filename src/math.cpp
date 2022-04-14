@@ -57,4 +57,5 @@ void enc_euclidean_dist(const Ciphertext &ct1, const Ciphertext &ct2, Ciphertext
     //evaluator.relinearize_inplace(ctdest, relin_keys);
     evaluator.rescale_to_next_inplace(ctdest);
     ctdest.scale() = scale;
+    ctdest.transform_to_ntt_inplace();
 }
