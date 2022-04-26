@@ -48,14 +48,14 @@ void enc_euclidean_dist(const Ciphertext &ct1, const Ciphertext &ct2, Ciphertext
     evaluator.sub(ct2, ct1, ctdest);
     evaluator.square_inplace(ctdest);
     evaluator.relinearize_inplace(ctdest, relin_keys);
+    Ciphertext temp_ct;
     for (size_t i = 1; i <= encoder.slot_count() / 2; i <<= 1) {
-        Ciphertext temp_ct;
         evaluator.rotate_vector(ctdest, i, gal_keys, temp_ct);
         evaluator.add_inplace(ctdest, temp_ct);
     }
     //rescaling
     //evaluator.relinearize_inplace(ctdest, relin_keys);
-    evaluator.rescale_to_next_inplace(ctdest);
-    ctdest.scale() = scale;
-    ctdest.transform_to_ntt_inplace();
+//    evaluator.rescale_to_next_inplace(ctdest);
+//    ctdest.scale() = scale;
+//    evaluator.transform_to_ntt_inplace(ctdest);
 }

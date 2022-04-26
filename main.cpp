@@ -4,6 +4,9 @@
 #include <iostream>
 #include <seal/seal.h>
 #include <fstream>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
 #include "src/math.h"
 #include "src/utilities.h"
 
@@ -13,7 +16,6 @@ using namespace seal;
 
 int main () {
 
-    
     /*
      *  Precomputation phase
      */
@@ -21,26 +23,25 @@ int main () {
 
     // Client side
 
-    //Creation of the keys
+    //Creation of the homomorphic keys
     // Seal encryption set up
     EncryptionParameters parms(scheme_type::ckks);
-    size_t poly_modulus_degree = 4096; // power of 2 available: 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
+    size_t poly_modulus_degree = 8192; // power of 2 available: 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
     parms.set_poly_modulus_degree(poly_modulus_degree);
-    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {39, 30, 40}));
-    //parms.set_poly_modulus_degree(poly_modulus_degree);
-    //parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {49, 40, 40, 40, 49}));
-    //parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {50, 50, 40, 40, 40 , 40, 40, 40, 40, 50})); // for big modulus
+//    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {39, 30, 40}));
+    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {49, 40, 40, 40, 49}));
+//    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {50, 50, 40, 40, 40 , 40, 40, 40, 40, 50})); // for big modulus
 
 
     //Number of rescaling allowed (amount of multiplication that are possible)
-    const vector<int> bitsizes = {39, 30, 40};
+//    const vector<int> bitsizes = {39, 30, 40};
 //    const vector<int> bitsizes = {50, 50, 40, 40, 40 , 40, 40, 40, 40, 50};
-//    const vector<int> bitsizes = {49, 40, 40, 40, 49};
+    const vector<int> bitsizes = {49, 40, 40, 40, 49};
     u_int nb_rescaling = bitsizes.size() - 2;
     //Slot dimension
     const size_t dimension = poly_modulus_degree/2;
     //scale for encoding
-    int power_of_scale = 30;
+    int power_of_scale = 40;
     double scale = pow(2.0, power_of_scale);
 
 
@@ -95,10 +96,40 @@ int main () {
     Evaluator evaluator(context);
     Decryptor decryptor(context, secret_key);
 
-    // Create a vector of plaintexts
     CKKSEncoder encoder(context);
 //    size_t slot_count = encoder.slot_count();
 //    cout << "Number of slots: " << slot_count << endl;
+
+
+    // Create of the signature key of the client
+    EVP_PKEY *sig_key_client = NULL;
+    EVP_PKEY_CTX *context_sig_client = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, NULL);
+    EVP_PKEY_keygen_init(context_sig_client);
+    EVP_PKEY_keygen(context_sig_client, &sig_key_client);
+    {
+        Stopwatch sw("Generation of the public key for signature of the client");
+        FILE *file;
+        file = fopen("../signature_client_pub.key", "wb");
+        if (file == NULL)
+        {
+            perror("Error opening file to save public signature key.");
+            return EXIT_FAILURE;
+        }
+        PEM_write_PUBKEY(file, sig_key_client);
+        fclose(file);
+    }
+    {
+        Stopwatch sw("Generation of the private key for signature of the client");
+        FILE *file;
+        file = fopen("../signature_client_priv.key", "wb");
+        if (file == NULL)
+        {
+            perror("Error opening file to save private signature key.");
+            return EXIT_FAILURE;
+        }
+        PEM_write_PrivateKey(file, sig_key_client, NULL, NULL, 0, NULL, NULL);
+        fclose(file);
+    }
 
     //Generation of the template
     vector<double> temp = create_vector_input(dimension);
@@ -120,6 +151,65 @@ int main () {
         ofstream fs("temp.ct", ios::binary);
         temp_ct.save(fs);
     }
+
+
+    //Small test areas
+    cout << endl << endl << "Small test area" << endl;
+    vector<double> u = {10.0, 20.0, 30.0, 40.0, 50.0};
+    vector<double> v = {60.0, 70.0, 80.0, 90.0, 100.0};
+//    vector<double> u = create_vector_input(20);
+//    vector<double> v = create_vector_input(20);
+
+
+
+    cout << "Square euclidean distance" << endl;
+    double euc_uv = euclidean_distance(u, v);
+    Plaintext u_pt, v_pt, uv_pt;
+    encoder.encode(u, scale, u_pt);
+    encoder.encode(v, scale, v_pt);
+    Ciphertext u_ct, v_ct, euc_uv_ct;
+    encryptor.encrypt(u_pt, u_ct);
+    encryptor.encrypt(v_pt, v_ct);
+    enc_euclidean_dist(u_ct, v_ct, euc_uv_ct, encoder, evaluator, gal_keys, relin_keys, scale);
+    decryptor.decrypt(euc_uv_ct, uv_pt);
+    vector<double> uv_dec;
+    encoder.decode(uv_pt, uv_dec);
+    cout << "The true result is " << euc_uv << " and the decrypted result is " << uv_dec[0] << endl;
+    print_vector(uv_dec);
+    cout << endl;
+
+
+    // Server side
+    // Create of the signature key of the server
+    EVP_PKEY *sig_key_server = NULL;
+    EVP_PKEY_CTX *context_sig_server = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, NULL);
+    EVP_PKEY_keygen_init(context_sig_server);
+    EVP_PKEY_keygen(context_sig_server, &sig_key_server);
+    {
+        Stopwatch sw("Generation of the public key for signature of the server");
+        FILE *file;
+        file = fopen("../signature_server_pub.key", "wb");
+        if (file == NULL)
+        {
+            perror("Error opening file to save public signature key.");
+            return EXIT_FAILURE;
+        }
+        PEM_write_PUBKEY(file, sig_key_server);
+        fclose(file);
+    }
+    {
+        Stopwatch sw("Generation of the private key for signature of the server");
+        FILE *file;
+        file = fopen("../signature_server_priv.key", "wb");
+        if (file == NULL)
+        {
+            perror("Error opening file to save private signature key.");
+            return EXIT_FAILURE;
+        }
+        PEM_write_PrivateKey(file, sig_key_server, NULL, NULL, 0, NULL, NULL);
+        fclose(file);
+    }
+
 
     //Client sends the template encrypted to the server
     //Server side
@@ -151,6 +241,27 @@ int main () {
         ofstream fs("sample.ct", ios::binary);
         temp_ct.save(fs);
     }
+    //Write the ciphertext as a char* for signature.
+//    vector<char> msg = FromFileToVect("sample.ct");
+//    unsigned char* p_msg = reinterpret_cast<unsigned char *>(&*msg.begin());
+    const unsigned char *msg = "Faisons le test.";
+    unsigned char* sample_ct_sig = NULL;
+    size_t* sample_ct_sig_length;
+    //signature of the ciphertext by the client
+    EVP_MD_CTX *context_sig = EVP_MD_CTX_new();
+    EVP_MD_CTX_set_pkey_ctx(context_sig, context_sig_client);
+    EVP_MD_CTX_init(context_sig);
+    if (EVP_DigestSignInit(context_sig, NULL, NULL, NULL, sig_key_client) != 1)
+    {
+        perror("Problem with initialisation of the sign digest.");
+        return EXIT_FAILURE;
+    }
+    if (EVP_DigestSign(context_sig, sample_ct_sig, sample_ct_sig_length , msg, strlen(msg)) != 1)
+    {
+        perror("Problem with initialisation of the sign digest.");
+        return EXIT_FAILURE;
+    }
+
 
     //Client sends the sample encrypted to the server
     // Server side
@@ -161,16 +272,36 @@ int main () {
         enc_euclidean_dist(temp_ct, sample_ct, euc_dist_ct, encoder, evaluator, gal_keys, relin_keys, scale);
     }
 
+    Plaintext enc_euclidean_dist_pt;
+    decryptor.decrypt(euc_dist_ct, enc_euclidean_dist_pt);
+    cout << "decryption of the euc dist done" << endl;
+    vector<double> euclidean_dist_dec;
+    encoder.decode(enc_euclidean_dist_pt, euclidean_dist_dec);
+    print_vector(euclidean_dist_dec);
+
+    //verification of the result
+    cout << "Verification if the ciphertext euclidean distance calculation is accurate." << endl;
+    double euc_dist_true = euclidean_distance(temp, sample);
+
+    cout << "The true result is " << euc_dist_true << " and the decrypted result is " << euclidean_dist_dec[0] << endl;
+
+    vector<double> bound = {1000.0};
+    Plaintext bound_pt;
+    encoder.encode(bound, scale, bound_pt);
+    evaluator.rescale_to_next_inplace(euc_dist_ct);
+    evaluator.mod_switch_to_next_inplace(bound_pt);
+    euc_dist_ct.scale() = scale;
+    evaluator.sub_plain_inplace(euc_dist_ct, bound_pt);
+
     // Server generates the random number Tau
-    double tau = random_double();
+    double tau = abs(random_double());
+    cout << "Tau is equal to " << tau << endl;
     // Server creates the plaintext for Tau
     Plaintext tau_pt;
     encoder.encode(tau, scale, tau_pt);
     // Server applies g function
     cout << "Encoding of tau done" << endl;
-
-    //cout << "encrypted_ntt is " << euc_dist_ct.parms_id() << endl;
-    //cout << "plain_ntt is " << tau_pt.parms_id() << endl;
+    evaluator.mod_switch_to_next_inplace(tau_pt);
     evaluator.multiply_plain_inplace(euc_dist_ct, tau_pt);
     cout << "calculation of the token y done" << endl;
     // Save the token y encrypted in a file to send it to client
@@ -186,15 +317,16 @@ int main () {
     cout << "decryption of the token done" << endl;
     vector<double> token;
     encoder.decode(token_pt, token);
+    cout << "The true token is " << (euc_dist_true - bound[0]) * tau << " and the decrypted token is " << token[0] << endl;
+    print_vector(token);
+
+    // Last free before ending
+    EVP_PKEY_CTX_free(context_sig_client);
+    EVP_PKEY_CTX_free(context_sig_server);
 
     /*
      * END OF THE PROTOCOL
      */
 
-    //verification of the result
-    cout << "Verification if the ciphertext calculation is accurate." << endl;
-    double euc_dist_true = euclidean_distance(temp, sample);
-
-    cout << "The true result is " << euc_dist_true << " and the decrypted result is " << token[0] << endl;
     return 0;
 }

@@ -4,6 +4,7 @@
 
 #include <random>
 #include <seal/seal.h>
+#include <fstream>
 #include "utilities.h"
 using namespace std;
 
@@ -89,4 +90,22 @@ void print_parameters(const seal::SEALContext &context)
     }
 
 //    cout << "\\" << std::endl << std::endl;
+}
+
+vector<char> FromFileToVect(string filename){
+    int i;
+    char byte = 0;
+    vector<char> bytes;
+
+    ifstream reader(filename, ios::binary);
+    if( ! reader ) {
+        perror("Error opening input file");
+        abort();
+    }
+
+    while (reader.get(byte)){
+        bytes.push_back(byte);
+    }
+    reader.close();
+    return bytes;
 }
