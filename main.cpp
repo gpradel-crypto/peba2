@@ -152,33 +152,6 @@ int main () {
         temp_ct.save(fs);
     }
 
-
-    //Small test areas
-    cout << endl << endl << "Small test area" << endl;
-    vector<double> u = {10.0, 20.0, 30.0, 40.0, 50.0};
-    vector<double> v = {60.0, 70.0, 80.0, 90.0, 100.0};
-//    vector<double> u = create_vector_input(20);
-//    vector<double> v = create_vector_input(20);
-
-
-
-    cout << "Square euclidean distance" << endl;
-    double euc_uv = euclidean_distance(u, v);
-    Plaintext u_pt, v_pt, uv_pt;
-    encoder.encode(u, scale, u_pt);
-    encoder.encode(v, scale, v_pt);
-    Ciphertext u_ct, v_ct, euc_uv_ct;
-    encryptor.encrypt(u_pt, u_ct);
-    encryptor.encrypt(v_pt, v_ct);
-    enc_euclidean_dist(u_ct, v_ct, euc_uv_ct, encoder, evaluator, gal_keys, relin_keys, scale);
-    decryptor.decrypt(euc_uv_ct, uv_pt);
-    vector<double> uv_dec;
-    encoder.decode(uv_pt, uv_dec);
-    cout << "The true result is " << euc_uv << " and the decrypted result is " << uv_dec[0] << endl;
-    print_vector(uv_dec);
-    cout << endl;
-
-
     // Server side
     // Create of the signature key of the server
     EVP_PKEY *sig_key_server = NULL;
@@ -212,6 +185,8 @@ int main () {
 
 
     //Client sends the template encrypted to the server
+
+
     //Server side
 
     /*
@@ -242,29 +217,57 @@ int main () {
         temp_ct.save(fs);
     }
     //Write the ciphertext as a char* for signature.
-//    vector<char> msg = FromFileToVect("sample.ct");
-//    unsigned char* p_msg = reinterpret_cast<unsigned char *>(&*msg.begin());
-    const unsigned char *msg = "Faisons le test.";
-    unsigned char* sample_ct_sig = NULL;
-    size_t* sample_ct_sig_length;
+    vector<char> v_msg_sample_ct = FromFileToVect("sample.ct");
+    unsigned char msg_sample_ct[v_msg_sample_ct.size()];
+    for (int i = 0; i < v_msg_sample_ct.size(); ++i) {
+        msg_sample_ct[i] = v_msg_sample_ct[i];
+    }
+    uint8_t* sample_ct_sig = NULL;
+    size_t sample_ct_sig_length = 0;
     //signature of the ciphertext by the client
     EVP_MD_CTX *context_sig = EVP_MD_CTX_new();
     EVP_MD_CTX_set_pkey_ctx(context_sig, context_sig_client);
     EVP_MD_CTX_init(context_sig);
-    if (EVP_DigestSignInit(context_sig, NULL, NULL, NULL, sig_key_client) != 1)
-    {
-        perror("Problem with initialisation of the sign digest.");
-        return EXIT_FAILURE;
-    }
-    if (EVP_DigestSign(context_sig, sample_ct_sig, sample_ct_sig_length , msg, strlen(msg)) != 1)
-    {
-        perror("Problem with initialisation of the sign digest.");
+    if (EVP_DigestSignInit(context_sig, &context_sig_client, NULL, NULL, sig_key_client) !=1 ){
+        perror("Problem with initialisation of the signature.");
         return EXIT_FAILURE;
     }
 
+    if (EVP_DigestSign(context_sig, sample_ct_sig, &sample_ct_sig_length , msg_sample_ct, sizeof(msg_sample_ct)) != 1)
+    {
+        perror("Signature cannot be done.");
+        return EXIT_FAILURE;
+    }
+    sample_ct_sig = (uint8_t*) malloc(sample_ct_sig_length * sizeof(uint8_t));
+    if (EVP_DigestSign(context_sig, sample_ct_sig, &sample_ct_sig_length , msg_sample_ct, sizeof(msg_sample_ct)) != 1)
+    {
+        perror("Signature cannot be done.");
+        return EXIT_FAILURE;
+    }
+    EVP_MD_CTX_free(context_sig);
 
-    //Client sends the sample encrypted to the server
+
+    //Client sends the sample encrypted to the server along with its signature
     // Server side
+
+    //Verification of the signature, if wrong then quit
+    EVP_MD_CTX *context_verif = EVP_MD_CTX_new();
+    EVP_MD_CTX_set_pkey_ctx(context_verif, context_sig_client);
+    EVP_MD_CTX_init(context_verif);
+
+    if (EVP_DigestVerifyInit(context_verif, &context_sig_client, NULL, NULL, sig_key_client) !=1 ){
+        perror("Problem with initialisation of the verification.");
+        return EXIT_FAILURE;
+    }
+    if (EVP_DigestVerify(context_verif, sample_ct_sig, sample_ct_sig_length, msg_sample_ct, sizeof(msg_sample_ct)) != 1){
+        perror("Verification of the signature cannot be done.");
+        return EXIT_FAILURE;
+    }
+
+    //No longer need of the signature items for the client
+    EVP_MD_CTX_free(context_verif);
+    EVP_PKEY_free(sig_key_client);
+    OPENSSL_free(sample_ct_sig);
 
     Ciphertext euc_dist_ct;
     {
@@ -309,9 +312,59 @@ int main () {
         ofstream fs("token.ct", ios::binary);
         euc_dist_ct.save(fs);
     }
-    //Server sends to Client the token
+    //Write the ciphertext as a char* for signature.
+    vector<char> v_msg_token = FromFileToVect("token.ct");
+    unsigned char msg_token[v_msg_token.size()];
+    for (int i = 0; i < v_msg_token.size(); ++i) {
+        msg_token[i] = v_msg_token[i];
+    }
+    uint8_t* token_sig = NULL;
+    size_t token_sig_length = 0;
+    //signature of the token by the client
+    context_sig = EVP_MD_CTX_new();
+    EVP_MD_CTX_set_pkey_ctx(context_sig, context_sig_server);
+    EVP_MD_CTX_init(context_sig);
+    if (EVP_DigestSignInit(context_sig, &context_sig_server, NULL, NULL, sig_key_server) !=1 ){
+        perror("Problem with initialisation of the signature.");
+        return EXIT_FAILURE;
+    }
 
-    //Client receives it and decrypts it
+    if (EVP_DigestSign(context_sig, token_sig, &token_sig_length , msg_token, sizeof(msg_token)) != 1)
+    {
+        perror("Signature cannot be done.");
+        return EXIT_FAILURE;
+    }
+    token_sig = (uint8_t*) malloc(token_sig_length * sizeof(uint8_t));
+    if (EVP_DigestSign(context_sig, token_sig, &token_sig_length , msg_token, sizeof(msg_token)) != 1)
+    {
+        perror("Signature cannot be done.");
+        return EXIT_FAILURE;
+    }
+    EVP_MD_CTX_free(context_sig);
+
+
+    //Server sends to Client the token and its signature
+
+    //Client receives them, verifies the signature and decrypts the token
+    //Verification of the signature, if wrong then quit
+    context_verif = EVP_MD_CTX_new();
+    EVP_MD_CTX_set_pkey_ctx(context_verif, context_sig_server);
+    EVP_MD_CTX_init(context_verif);
+
+    if (EVP_DigestVerifyInit(context_verif, &context_sig_server, NULL, NULL, sig_key_server) !=1 ){
+        perror("Problem with initialisation of the verification.");
+        return EXIT_FAILURE;
+    }
+    if (EVP_DigestVerify(context_verif, token_sig, token_sig_length, msg_token, sizeof(msg_token)) != 1){
+        perror("Verification of the signature cannot be done.");
+        return EXIT_FAILURE;
+    }
+
+    //No longer need of the signature items for the client
+    EVP_MD_CTX_free(context_verif);
+    EVP_PKEY_free(sig_key_server);
+    OPENSSL_free(token_sig);
+
     Plaintext token_pt;
     decryptor.decrypt(euc_dist_ct, token_pt);
     cout << "decryption of the token done" << endl;
@@ -320,9 +373,6 @@ int main () {
     cout << "The true token is " << (euc_dist_true - bound[0]) * tau << " and the decrypted token is " << token[0] << endl;
     print_vector(token);
 
-    // Last free before ending
-    EVP_PKEY_CTX_free(context_sig_client);
-    EVP_PKEY_CTX_free(context_sig_server);
 
     /*
      * END OF THE PROTOCOL
