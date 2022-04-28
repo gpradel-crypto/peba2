@@ -64,7 +64,7 @@ int main () {
     {
         Stopwatch sw("Generation of the secret key");
         secret_key = keygen.secret_key();
-        ofstream fs("secret.key", ios::binary);
+        ofstream fs("../keys/secret.key", ios::binary);
         secret_key.save(fs);
     }
 
@@ -72,7 +72,7 @@ int main () {
     {
         Stopwatch sw("Generation of the public key");
         keygen.create_public_key(public_key);
-        ofstream fs("public.key", ios::binary);
+        ofstream fs("../keys/public.key", ios::binary);
         public_key.save(fs);
     }
 
@@ -80,7 +80,7 @@ int main () {
     {
         Stopwatch sw("Generation of the relinearisation key");
         keygen.create_relin_keys(relin_keys);
-        ofstream fs("relin.key", ios::binary);
+        ofstream fs("../keys/relin.key", ios::binary);
         relin_keys.save(fs);
     }
 
@@ -88,7 +88,7 @@ int main () {
     {
         Stopwatch sw("Generation of the galois key");
         keygen.create_galois_keys(gal_keys);
-        ofstream fs("galois.key", ios::binary);
+        ofstream fs("../keys/galois.key", ios::binary);
         gal_keys.save(fs);
     }
 
@@ -109,7 +109,7 @@ int main () {
     {
         Stopwatch sw("Generation of the public key for signature of the client");
         FILE *file;
-        file = fopen("../signature_client_pub.key", "wb");
+        file = fopen("../keys/signature_client_pub.key", "wb");
         if (file == NULL)
         {
             perror("Error opening file to save public signature key.");
@@ -121,7 +121,7 @@ int main () {
     {
         Stopwatch sw("Generation of the private key for signature of the client");
         FILE *file;
-        file = fopen("../signature_client_priv.key", "wb");
+        file = fopen("../keys/signature_client_priv.key", "wb");
         if (file == NULL)
         {
             perror("Error opening file to save private signature key.");
@@ -148,7 +148,7 @@ int main () {
     }
     //Save the ciphertext in a file
     {
-        ofstream fs("temp.ct", ios::binary);
+        ofstream fs("../ciphertexts/temp.ct", ios::binary);
         temp_ct.save(fs);
     }
 
@@ -161,7 +161,7 @@ int main () {
     {
         Stopwatch sw("Generation of the public key for signature of the server");
         FILE *file;
-        file = fopen("../signature_server_pub.key", "wb");
+        file = fopen("../keys/signature_server_pub.key", "wb");
         if (file == NULL)
         {
             perror("Error opening file to save public signature key.");
@@ -173,7 +173,7 @@ int main () {
     {
         Stopwatch sw("Generation of the private key for signature of the server");
         FILE *file;
-        file = fopen("../signature_server_priv.key", "wb");
+        file = fopen("../keys/signature_server_priv.key", "wb");
         if (file == NULL)
         {
             perror("Error opening file to save private signature key.");
@@ -213,11 +213,11 @@ int main () {
     }
     //Save the ciphertext in a file
     {
-        ofstream fs("sample.ct", ios::binary);
+        ofstream fs("../ciphertexts/sample.ct", ios::binary);
         temp_ct.save(fs);
     }
     //Write the ciphertext as a char* for signature.
-    vector<char> v_msg_sample_ct = FromFileToVect("sample.ct");
+    vector<char> v_msg_sample_ct = FromFileToVect("../ciphertexts/sample.ct");
     unsigned char msg_sample_ct[v_msg_sample_ct.size()];
     for (int i = 0; i < v_msg_sample_ct.size(); ++i) {
         msg_sample_ct[i] = v_msg_sample_ct[i];
@@ -309,11 +309,11 @@ int main () {
     cout << "calculation of the token y done" << endl;
     // Save the token y encrypted in a file to send it to client
     {
-        ofstream fs("token.ct", ios::binary);
+        ofstream fs("../ciphertexts/token.ct", ios::binary);
         euc_dist_ct.save(fs);
     }
     //Write the ciphertext as a char* for signature.
-    vector<char> v_msg_token = FromFileToVect("token.ct");
+    vector<char> v_msg_token = FromFileToVect("../ciphertexts/token.ct");
     unsigned char msg_token[v_msg_token.size()];
     for (int i = 0; i < v_msg_token.size(); ++i) {
         msg_token[i] = v_msg_token[i];
