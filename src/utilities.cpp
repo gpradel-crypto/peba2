@@ -26,6 +26,15 @@ vector<double> create_vector_input(size_t dimension) {
     return results;
 }
 
+vector<double> create_vector_input_chosen(size_t dimension, double value) {
+    vector<double> results;
+//    results.reserve(dimension);
+    for (size_t i  = 0; i < dimension ; i++) {
+        results.push_back(value);
+    };
+    return results;
+}
+
 void print_vector(vector<double> vect) {
     cout << "[ ";
     for (int i = 0; i < vect.size(); i++) {

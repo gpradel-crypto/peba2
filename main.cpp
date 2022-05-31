@@ -24,23 +24,23 @@ int main () {
     //Creation of the keys
     // Seal encryption set up
     EncryptionParameters parms(scheme_type::ckks);
-    size_t poly_modulus_degree = 4096; // power of 2 available: 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
+    size_t poly_modulus_degree = 8192; // power of 2 available: 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
     parms.set_poly_modulus_degree(poly_modulus_degree);
-    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {39, 30, 40}));
+//    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {39, 30, 40}));
     //parms.set_poly_modulus_degree(poly_modulus_degree);
-    //parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {49, 40, 40, 40, 49}));
+    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {49, 40, 40, 40, 49}));
     //parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {50, 50, 40, 40, 40 , 40, 40, 40, 40, 50})); // for big modulus
 
 
     //Number of rescaling allowed (amount of multiplication that are possible)
-    const vector<int> bitsizes = {39, 30, 40};
+//    const vector<int> bitsizes = {39, 30, 40};
 //    const vector<int> bitsizes = {50, 50, 40, 40, 40 , 40, 40, 40, 40, 50};
-//    const vector<int> bitsizes = {49, 40, 40, 40, 49};
+    const vector<int> bitsizes = {49, 40, 40, 40, 49};
     u_int nb_rescaling = bitsizes.size() - 2;
     //Slot dimension
     const size_t dimension = poly_modulus_degree/2;
     //scale for encoding
-    int power_of_scale = 30;
+    int power_of_scale = 40;
     double scale = pow(2.0, power_of_scale);
 
 
@@ -101,7 +101,7 @@ int main () {
 //    cout << "Number of slots: " << slot_count << endl;
 
     //Generation of the template
-    vector<double> temp = create_vector_input(dimension);
+    vector<double> temp = create_vector_input_chosen(dimension, 1.0);
     print_vector(temp);
 
     // Encryption of the template
@@ -132,7 +132,7 @@ int main () {
     //Client side
 
     //Generation of the sample
-    vector<double> sample = create_vector_input(dimension);
+    vector<double> sample = create_vector_input_chosen(dimension, 2.0);
     print_vector(sample);
 
     // Encryption of the template
@@ -171,6 +171,7 @@ int main () {
 
     //cout << "encrypted_ntt is " << euc_dist_ct.parms_id() << endl;
     //cout << "plain_ntt is " << tau_pt.parms_id() << endl;
+    evaluator.mod_switch_to_inplace(tau_pt, euc_dist_ct.parms_id());
     evaluator.multiply_plain_inplace(euc_dist_ct, tau_pt);
     cout << "calculation of the token y done" << endl;
     // Save the token y encrypted in a file to send it to client
@@ -195,6 +196,7 @@ int main () {
     cout << "Verification if the ciphertext calculation is accurate." << endl;
     double euc_dist_true = euclidean_distance(temp, sample);
 
-    cout << "The true result is " << euc_dist_true << " and the decrypted result is " << token[0] << endl;
+    cout << "The true result is " << euc_dist_true * tau << " and the decrypted result is " << token[0] << endl;
+//    print_vector(token);
     return 0;
 }

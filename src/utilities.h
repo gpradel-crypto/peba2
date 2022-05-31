@@ -35,6 +35,7 @@ private:
 
 double random_double(void);
 std::vector<double> create_vector_input(size_t dimension);
+std::vector<double> create_vector_input_chosen(size_t dimension, double value);
 void print_vector(std::vector<double> vect);
 void print_parameters(const seal::SEALContext &context);
 
