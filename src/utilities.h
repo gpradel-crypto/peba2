@@ -38,5 +38,6 @@ std::vector<double> create_vector_input(size_t dimension);
 std::vector<double> create_vector_input_chosen(size_t dimension, double value);
 void print_vector(std::vector<double> vect);
 void print_parameters(const seal::SEALContext &context);
+std::vector<char> FromFileToVect(std::string filename);
 
 #endif //THREATS_SEAL_UTILITIES_H

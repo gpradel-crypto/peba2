@@ -7,3 +7,5 @@ add_executable(threats-seal main.cpp src/math.cpp src/math.h src/utilities.cpp s
 
 find_package(SEAL 4.0 REQUIRED)
 target_link_libraries(threats-seal SEAL::seal)
+find_package(OpenSSL REQUIRED)
+target_link_libraries(threats-seal OpenSSL::SSL)
