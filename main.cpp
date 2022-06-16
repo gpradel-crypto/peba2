@@ -217,10 +217,9 @@ int main () {
     //Client side
 
     //Generation of the sample
-    std::string path_sample = "../pict_arrays/encoding_GPR.JPG.data";
+    std::string path_sample = "../pict_arrays/encoding_INCERT_U Photo GPR.jpg.data";
     std::vector<double> sample = ParseEncoding(reader, path_sample);
     FillVectorUntilN(sample, encoder.slot_count(), 0.0);
-//    PrintVector(sample);
 
     // Encryption of the template
     seal::Plaintext sample_pt;
@@ -292,42 +291,55 @@ int main () {
 
     seal::Ciphertext euc_dist_ct;
     {
-        Stopwatch sw("Computation of the euclidean distance between the template and the sample", file_output_results, 1);
-        enc_euclidean_dist(templates_ct[0], sample_ct, euc_dist_ct, encoder, evaluator, gal_keys, relin_keys, scale);
+        Stopwatch sw("HE: Computation of the euclidean distance (first part of the function f) between the template and the sample", file_output_results, 1);
+        enc_euclidean_dist(templates_ct[15], sample_ct, euc_dist_ct, encoder, evaluator, gal_keys, relin_keys, scale);
     }
 
-//    seal::Plaintext enc_euclidean_dist_pt;
-//    decryptor.decrypt(euc_dist_ct, enc_euclidean_dist_pt);
-//    file_output_results << "decryption of the euc dist done" << std::endl;
-//    std::vector<double> euclidean_dist_dec;
-//    encoder.decode(enc_euclidean_dist_pt, euclidean_dist_dec);
+    seal::Plaintext enc_euclidean_dist_pt;
+    std::vector<double> euclidean_dist_dec;
+    {
+        Stopwatch sw("HE: Decryption of the euclidean distance (first part of the function f) between the template and the sample", file_output_results, 1);
+        decryptor.decrypt(euc_dist_ct, enc_euclidean_dist_pt);
+    }
+    {
+        Stopwatch sw("HE: Decoding of the euclidean distance (first part of the function f) between the template and the sample", file_output_results, 1);
+        encoder.decode(enc_euclidean_dist_pt, euclidean_dist_dec);
+    }
+
 //    PrintVector(euclidean_dist_dec);
 
-    //verification of the result
-//    file_output_results << "Verification if the ciphertext euclidean distance calculation is accurate." << std::endl;
-//    double euc_dist_true = euclidean_distance(templates[0], sample);
-
-//    file_output_results << "The true result is " << euc_dist_true << " and the decrypted result is " << euclidean_dist_dec[0] << std::endl;
+//    verification of the result
+    file_output_results << "Verification if the ciphertext euclidean distance calculation is accurate." << std::endl;
+    double euc_dist_true = euclidean_distance(templates[15], sample);
+    file_output_results << "The true result is " << euc_dist_true << " and the decrypted result is " << euclidean_dist_dec[0] << std::endl;
 
     std::vector<double> bound = {1000.0};
     seal::Plaintext bound_pt;
     encoder.encode(bound, scale, bound_pt);
-    evaluator.rescale_to_next_inplace(euc_dist_ct);
-    evaluator.mod_switch_to_next_inplace(bound_pt);
-    euc_dist_ct.scale() = scale;
-    evaluator.sub_plain_inplace(euc_dist_ct, bound_pt);
+    {
+        Stopwatch sw("HE: Computation of the end of the function f", file_output_results,1);
+        evaluator.rescale_to_next_inplace(euc_dist_ct);
+        evaluator.mod_switch_to_next_inplace(bound_pt);
+        euc_dist_ct.scale() = scale;
+        evaluator.sub_plain_inplace(euc_dist_ct, bound_pt);
+    }
 
     // Server generates the random number Tau
     double tau = abs(RandomDouble());
 //    file_output_results << "Tau is equal to " << tau << std::endl;
     // Server creates the plaintext for Tau
     seal::Plaintext tau_pt;
-    encoder.encode(tau, scale, tau_pt);
+    {
+        Stopwatch sw("Generation of tau, encoding and modulus switch for computation.", file_output_results,1);
+        encoder.encode(tau, scale, tau_pt);
     // Server applies g function
-    file_output_results << "Encoding of tau done" << std::endl;
-    evaluator.mod_switch_to_next_inplace(tau_pt);
-    evaluator.multiply_plain_inplace(euc_dist_ct, tau_pt);
-    file_output_results << "calculation of the token y done" << std::endl;
+        evaluator.mod_switch_to_next_inplace(tau_pt);
+    }
+    {
+        Stopwatch sw("HE: Computation of the function g", file_output_results,1);
+        evaluator.multiply_plain_inplace(euc_dist_ct, tau_pt);
+    }
+    file_output_results << "Calculation of the token y completed." << std::endl;
     // Save the token y encrypted in a file to send it to client
     {
         std::ofstream fs("../ciphertexts/token.ct", std::ios::binary);
@@ -363,6 +375,8 @@ int main () {
     }
     EVP_MD_CTX_free(context_sig);
 
+    file_output_results << "Signature by the Server done." << std::endl;
+
 
     //Server sends to Client the token and its signature
 
@@ -386,14 +400,22 @@ int main () {
     EVP_PKEY_free(sig_key_server);
     OPENSSL_free(token_sig);
 
-    seal::Plaintext token_pt;
-    decryptor.decrypt(euc_dist_ct, token_pt);
-    file_output_results << "decryption of the token done" << std::endl;
-    std::vector<double> token;
-    encoder.decode(token_pt, token);
-//    file_output_results << "The true token is " << (euc_dist_true - bound[0]) * tau << " and the decrypted token is " << token[0] << std::endl;
-    PrintVector(token);
+    file_output_results << "Signature verified by the Client." << std::endl;
 
+    seal::Plaintext token_pt;
+    std::vector<double> token;
+    {
+        Stopwatch sw("HE: Decryption and decoding of the token.", file_output_results,1);
+        decryptor.decrypt(euc_dist_ct, token_pt);
+        encoder.decode(token_pt, token);
+    }
+
+    if (token[0] < 0){
+        file_output_results << "The authentication was successful and the token " << token[0] << " is usable to access to the desired service." << std::endl;
+    }
+    else {
+        file_output_results << "The authentication was unsuccessful and the token " << token[0] << " is not usable to access to the desired service." << std::endl;
+    }
 
     /*
      * END OF THE PROTOCOL
