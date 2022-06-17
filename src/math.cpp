@@ -59,3 +59,19 @@ void enc_euclidean_dist(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2
 //    ctdest.scale() = scale;
 //    evaluator.transform_to_ntt_inplace(ctdest);
 }
+
+double polynomial_approx_sign(double x){
+    // the polynomial is -2x^3 + 3x^2
+    double result = -2* pow(x, 3) + 3 * pow(x, 2);
+    return result;
+}
+
+double comp_approx(double x){
+    double result = (polynomial_approx_sign(x) + 1)/2;
+    return result;
+}
+
+double f2(double x){
+    double result = (3.0/8.0)* pow(x, 5) - (10.0/8.0)*pow(x,3) + (15.0/8.0)* x;
+    return result;
+}

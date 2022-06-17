@@ -12,6 +12,22 @@
 
 int main () {
 
+    double a = 0.4;
+    double b = 0.4;
+
+    double approx = a - b;
+    double tmp_res;
+    int loop = 10;
+    for (int i = 0; i < loop; ++i) {
+        tmp_res = f2(approx);
+        approx = tmp_res;
+        std::cout << "La valeur est egale a " << approx << std::endl;
+    }
+    approx+= 1;
+    approx /= 2;
+    std::cout << "La valeur recherchée après " << loop << " composition de f est egale a " << approx << std::endl;
+
+
     //Time of the full suite of tests
     auto start_time_full = std::chrono::high_resolution_clock::now();
 
