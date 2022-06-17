@@ -12,6 +12,9 @@
 
 int main () {
 
+    //Time of the full suite of tests
+    auto start_time_full = std::chrono::high_resolution_clock::now();
+
     std::ofstream file_output_results("../results.data");
 
     /*
@@ -313,7 +316,7 @@ int main () {
     double euc_dist_true = euclidean_distance(templates[15], sample);
     file_output_results << "The true result is " << euc_dist_true << " and the decrypted result is " << euclidean_dist_dec[0] << std::endl;
 
-    std::vector<double> bound = {1000.0};
+    std::vector<double> bound = {0.4}; // this choice is based on the python library face_recognition
     seal::Plaintext bound_pt;
     encoder.encode(bound, scale, bound_pt);
     {
@@ -326,7 +329,10 @@ int main () {
 
     // Server generates the random number Tau
     double tau = abs(RandomDouble());
-//    file_output_results << "Tau is equal to " << tau << std::endl;
+
+    // Needs to save tau as a file to sign it after. And normally also 0.0, but not done here
+    // but it's not working without the comparison done one the euc dist with the bound
+
     // Server creates the plaintext for Tau
     seal::Plaintext tau_pt;
     {
@@ -345,7 +351,7 @@ int main () {
         std::ofstream fs("../ciphertexts/token.ct", std::ios::binary);
         euc_dist_ct.save(fs);
     }
-    //Write the ciphertext as a char* for signature.
+    //Write tau as a char* for signature.
     std::vector<char> v_msg_token = FromFileToVect("../ciphertexts/token.ct");
     unsigned char msg_token[v_msg_token.size()];
     for (int i = 0; i < v_msg_token.size(); ++i) {
@@ -416,6 +422,11 @@ int main () {
     else {
         file_output_results << "The authentication was unsuccessful and the token " << token[0] << " is not usable to access to the desired service." << std::endl;
     }
+
+
+    auto end_time_full = std::chrono::high_resolution_clock::now();
+    auto duration_full = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_full - start_time_full);
+    file_output_results << std::endl << std::endl << std::endl << "The full protocol has taken " << duration_full.count() << " milliseconds." << std::endl;
 
     /*
      * END OF THE PROTOCOL
