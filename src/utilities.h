@@ -45,6 +45,7 @@ private:
 
 
 void PrintVector(std::vector<double> vect);
+void PrintVectorUntilN(std::vector<double> vect, int n);
 void PrintVectorFile(std::vector<double> vect, std::ofstream& file_name);
 void PrintVector2(std::vector<std::vector<double>> vect);
 void PrintVector2UntilN(std::vector<std::vector<double>> vect, int n);

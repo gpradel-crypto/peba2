@@ -4,6 +4,7 @@
 
 #include "math.h"
 
+
 double manhattan_distance(std::vector<double> v1, std::vector<double> v2){
     if (v1.size() != v2.size())
         abort();
@@ -71,7 +72,102 @@ double comp_approx(double x){
     return result;
 }
 
+double f1(double x){
+    double result = (-1.0/2.0)*pow(x, 3) + (3.0/2.0)*x;
+    return result;
+}
+
 double f2(double x){
     double result = (3.0/8.0)* pow(x, 5) - (10.0/8.0)*pow(x,3) + (15.0/8.0)* x;
     return result;
+}
+
+double f3(double x){
+    double result = (-5.0/16.0)*pow(x,7) + (21.0/16.0)* pow(x, 5) - (35.0/16.0)*pow(x,3) + (35.0/16.0)*x;
+    return result;
+}
+
+void enc_f1(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest, seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
+            seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys, const seal::RelinKeys &relin_keys, const double scale){
+    double a3 = -1.0/2.0;
+    double a1 = 3.0/2.0;
+//    std::cout << "ct_x egale a " << std::endl;
+//    decrypt_decode_print(ct_x, encoder, decryptor);
+    seal::Plaintext a3_pt, a1_pt;
+    encoder.encode(a1, scale, a1_pt);
+    encoder.encode(a3, scale, a3_pt);
+    seal::Ciphertext ct_x2;
+    evaluator.square(ct_x, ct_x2);
+//    std::cout << "ct_x2 avant rescale et relin egale a " << std::endl;
+//    decrypt_decode_print(ct_x2, encoder, decryptor);
+    evaluator.relinearize_inplace(ct_x2, relin_keys);
+//    std::cout << "ct_x2 apres relin egale a " << std::endl;
+//    decrypt_decode_print(ct_x2, encoder, decryptor);
+    evaluator.rescale_to_next_inplace(ct_x2);
+//    std::cout << "ct_x2 apres rescale egale a " << std::endl;
+//    decrypt_decode_print(ct_x2, encoder, decryptor);
+    evaluator.mod_switch_to_inplace(ct_x, ct_x2.parms_id());
+//    std::cout << "ct_x apres rescale egale a " << std::endl;
+//    decrypt_decode_print(ct_x, encoder, decryptor);
+    seal::Ciphertext ct_x3;
+    evaluator.multiply(ct_x2, ct_x, ct_x3);
+//    std::cout << "ct_x3 avant rescale et relin egale a " << std::endl;
+//    decrypt_decode_print(ct_x3, encoder, decryptor);
+    evaluator.relinearize_inplace(ct_x3, relin_keys);
+//    std::cout << "ct_x3 apres relin egale a " << std::endl;
+//    decrypt_decode_print(ct_x3, encoder, decryptor);
+    evaluator.rescale_to_next_inplace(ct_x3);
+//    std::cout << "ct_x3 apres rescale egale a " << std::endl;
+//    decrypt_decode_print(ct_x3, encoder, decryptor);
+    evaluator.mod_switch_to_inplace(a3_pt, ct_x3.parms_id());
+    evaluator.multiply_plain_inplace(ct_x3, a3_pt);
+//    std::cout << "ct_x3 apres mult plain egale a " << std::endl;
+//    decrypt_decode_print(ct_x3, encoder, decryptor);
+    evaluator.mod_switch_to_inplace(a1_pt, ct_x.parms_id());
+    evaluator.multiply_plain_inplace(ct_x, a1_pt);
+//    std::cout << "ct_x apres mult plain egale a " << std::endl;
+//    decrypt_decode_print(ct_x, encoder, decryptor);
+//    evaluator.rescale_to_next_inplace(ct_x);
+    evaluator.rescale_to_inplace(ct_x, ct_x3.parms_id());
+//    std::cout << "ct_x apres rescale egale a " << std::endl;
+//    decrypt_decode_print(ct_x, encoder, decryptor);
+    evaluator.rescale_to_next_inplace(ct_x3);
+    evaluator.mod_switch_to_inplace(ct_x, ct_x3.parms_id());
+    ct_x3.scale() = ct_x.scale();
+//    std::cout << "ct_x apres brute force scaling egale a " << std::endl;
+//    decrypt_decode_print(ct_x, encoder, decryptor);
+//    std::cout << "ct_x3 apres brute force scaling egale a " << std::endl;
+//    decrypt_decode_print(ct_x3, encoder, decryptor);
+    evaluator.add(ct_x3, ct_x, ctdest);
+    std::cout << "ct_dest  egale a " << std::endl;
+    decrypt_decode_print(ctdest, encoder, decryptor);
+}
+
+void enc_final_output_inplace(seal::Ciphertext &ct, seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
+                              seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys,
+                              const seal::RelinKeys &relin_keys, const double scale){
+    double one = 1.0;
+    double half = 0.5;
+    seal::Plaintext one_pt, half_pt;
+    encoder.encode(one, scale, one_pt);
+    encoder.encode(half, scale, half_pt);
+    evaluator.mod_switch_to_inplace(one_pt, ct.parms_id());
+    one_pt.scale() = ct.scale();
+    evaluator.add_plain_inplace(ct, one_pt);
+    evaluator.mod_switch_to_inplace(half_pt, ct.parms_id());
+    evaluator.multiply_plain_inplace(ct, half_pt);
+    evaluator.rescale_to_next_inplace(ct);
+}
+
+void decrypt_decode_print(seal::Ciphertext &ct, seal::CKKSEncoder &encoder, seal::Decryptor &decryptor){
+    seal::Plaintext tmp_pt;
+    std::vector<double> tmp;
+    decryptor.decrypt(ct, tmp_pt);
+    encoder.decode(tmp_pt, tmp);
+    std::cout << "[ ";
+    for (int i = 0; i < 10; i++) {
+        std::cout << tmp[i] << ", ";
+    }
+    std::cout << tmp[10] << " ]";
+    std::cout << std::endl << std::endl;
 }

@@ -20,6 +20,19 @@ void PrintVector(std::vector<double> vect) {
     std::cout << std::endl << std::endl;
 }
 
+void PrintVectorUntilN(std::vector<double> vect, int n) {
+    if (vect.empty()) {
+        perror("Vector empty for print in stdout");
+        abort();
+    }
+    std::cout << "[ ";
+    for (int i = 0; i < n; i++) {
+        std::cout << vect[i] << ", ";
+    }
+    std::cout << vect[n] << " ]";
+    std::cout << std::endl << std::endl;
+}
+
 void PrintVectorFile(std::vector<double> vect, std::ofstream& file_name) {
     if (vect.empty()) {
         perror("Vector empty for print in the file");

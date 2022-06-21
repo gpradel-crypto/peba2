@@ -12,20 +12,7 @@
 
 int main () {
 
-    double a = 0.4;
-    double b = 0.4;
 
-    double approx = a - b;
-    double tmp_res;
-    int loop = 10;
-    for (int i = 0; i < loop; ++i) {
-        tmp_res = f2(approx);
-        approx = tmp_res;
-        std::cout << "La valeur est egale a " << approx << std::endl;
-    }
-    approx+= 1;
-    approx /= 2;
-    std::cout << "La valeur recherchée après " << loop << " composition de f est egale a " << approx << std::endl;
 
 
     //Time of the full suite of tests
@@ -43,17 +30,23 @@ int main () {
     //Creation of the homomorphic keys
     // Seal encryption set up
     seal::EncryptionParameters parms(seal::scheme_type::ckks);
-    size_t poly_modulus_degree = 8192; // power of 2 available: 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
+    size_t poly_modulus_degree = 32768; // power of 2 available: 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
     parms.set_poly_modulus_degree(poly_modulus_degree);
 //    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {39, 30, 40}));
-    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {49, 40, 40, 40, 49}));
-//    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {50, 50, 40, 40, 40 , 40, 40, 40, 40, 50})); // for big modulus
+//    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {49, 40, 40, 40, 49}));
+//    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {59, 40, 40, 40, 40, 40, 40, 40, 40, 59})); // for big modulus
+//    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {54, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 54}));
+//    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {60, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,30,30,30,30,30,30,30,30,30,30,30,30, 60}));
+    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {60, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 60}));
 
 
     //Number of rescaling allowed (amount of multiplication that are possible)
 //    const vector<int> bitsizes = {39, 30, 40};
-//    const vector<int> bitsizes = {50, 50, 40, 40, 40 , 40, 40, 40, 40, 50};
-    const std::vector<int> bitsizes = {49, 40, 40, 40, 49};
+//    const std::vector<int> bitsizes = {59, 40, 40, 40, 40, 40, 40, 40, 40, 59};
+//    const std::vector<int> bitsizes = {54, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 54};
+    const std::vector<int> bitsizes = {60, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 60};
+//    const std::vector<int> bitsizes = {60, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,30,30,30,30,30,30,30,30,30,30,30,30, 60};
+//    const std::vector<int> bitsizes = {49, 40, 40, 40, 49};
     u_int nb_rescaling = bitsizes.size() - 2;
     //Slot dimension
     const size_t dimension = poly_modulus_degree/2;
@@ -104,9 +97,9 @@ int main () {
     seal::GaloisKeys gal_keys;
     {
         Stopwatch sw("Generation of the galois key", file_output_results, 1);
-        keygen.create_galois_keys(gal_keys);
-        std::ofstream fs("../keys/galois.key", std::ios::binary);
-        gal_keys.save(fs);
+//        keygen.create_galois_keys(gal_keys);
+//        std::ofstream fs("../keys/galois.key", std::ios::binary);
+//        gal_keys.save(fs);
     }
 
     seal::Encryptor encryptor(context, public_key);
@@ -115,6 +108,55 @@ int main () {
     seal::CKKSEncoder encoder(context);
 //    size_t slot_count = encoder.slot_count();
 //    cout << "Number of slots: " << slot_count << endl;
+
+
+    double a = 0.3345345632;
+    double b = 0.4;
+
+    double approx = a - b;
+    double tmp_res;
+    int loop = 10;
+    for (int i = 0; i < loop; ++i) {
+        tmp_res = f1(approx);
+        approx = tmp_res;
+        std::cout << "La valeur est egale a " << approx << std::endl;
+    }
+    approx+= 1;
+    approx /= 2;
+    std::cout << "La valeur recherchée après " << loop << " composition de f est egale a " << approx << std::endl;
+
+    seal::Plaintext approx_pt;
+    seal::Ciphertext approx_ct, approx_result_ct;
+    encoder.encode(a-b, scale, approx_pt);
+    encryptor.encrypt(approx_pt, approx_ct);
+    {
+        std::ofstream fs("../ciphertexts/approx_result.ct", std::ios::binary);
+        approx_ct.save(fs);
+    }
+    seal::Plaintext tmp_pt;
+    std::vector<double> tmp_dec;
+    decryptor.decrypt(approx_ct, tmp_pt);
+    encoder.decode(tmp_pt, tmp_dec);
+    PrintVectorUntilN(tmp_dec, 10);
+
+    for (int i = 0; i < 6; ++i) {
+        std::cout << " c'est la " << i +1 << " application de f" << std::endl;
+        std::ifstream is;
+        is.open("../ciphertexts/approx_result.ct", std::ios::binary);
+        seal::Ciphertext tmp_approx;
+        tmp_approx.load(context, is);
+        is.close();
+        enc_f1(approx_ct, approx_result_ct, encoder, decryptor, evaluator, gal_keys, relin_keys, scale);
+        std::ofstream fs("../ciphertexts/approx_result.ct", std::ios::binary);
+        approx_result_ct.save(fs);
+    }
+    enc_final_output_inplace(approx_result_ct, encoder, decryptor, evaluator, gal_keys, relin_keys, scale);
+
+    seal::Plaintext approx_result_pt;
+    std::vector<double> approx_result;
+    decryptor.decrypt(approx_result_ct, approx_result_pt);
+    encoder.decode(approx_result_pt, approx_result);
+    PrintVectorUntilN(approx_result, 10);
 
 
 //    // Create of the signature key of the client

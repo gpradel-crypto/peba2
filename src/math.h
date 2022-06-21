@@ -19,5 +19,13 @@ void enc_euclidean_dist(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2
                         seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys, const seal::RelinKeys &relin_keys, const double scale);
 double polynomial_approx_sign(double x);
 double comp_approx(double x);
+double f1(double x);
 double f2(double x);
+double f3(double x);
+void enc_f1(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest, seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
+            seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys, const seal::RelinKeys &relin_keys, const double scale);
+void enc_final_output_inplace(seal::Ciphertext &ct, seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
+                              seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys,
+                              const seal::RelinKeys &relin_keys, const double scale);
+void decrypt_decode_print(seal::Ciphertext &ct, seal::CKKSEncoder &encoder, seal::Decryptor &decryptor);
 #endif //THREATS_SEAL_MATH_H
