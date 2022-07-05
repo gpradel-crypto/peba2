@@ -1,16 +1,19 @@
 //
 // Created by gpr on 16/03/2022.
 //
-#include <iostream>
-#include <seal/seal.h>
+
 #include <fstream>
+#include <iostream>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <seal/seal.h>
+#include "src/homomorphic_math.h"
 #include "src/math.h"
 #include "src/utilities.h"
 
-int main () {
+
+int main() {
 
 
 
@@ -23,7 +26,8 @@ int main () {
     /*
      *  Precomputation phase
      */
-    file_output_results << "  ----------- Precomputation phase --------------" << std::endl;
+    file_output_results << "  ----------- Precomputation phase --------------"
+                        << std::endl;
 
     // Client side
 
@@ -37,32 +41,41 @@ int main () {
 //    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {59, 40, 40, 40, 40, 40, 40, 40, 40, 59})); // for big modulus
 //    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {54, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 54}));
 //    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {60, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,30,30,30,30,30,30,30,30,30,30,30,30, 60}));
-    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree, {60, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 60}));
+    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree,
+                                                       {60, 40, 40, 40, 40, 40,
+                                                        40, 40, 40, 40, 40, 40,
+                                                        40, 40, 40, 40, 40, 40,
+                                                        40, 40, 60}));
 
 
     //Number of rescaling allowed (amount of multiplication that are possible)
 //    const vector<int> bitsizes = {39, 30, 40};
 //    const std::vector<int> bitsizes = {59, 40, 40, 40, 40, 40, 40, 40, 40, 59};
 //    const std::vector<int> bitsizes = {54, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 54};
-    const std::vector<int> bitsizes = {60, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 60};
+    const std::vector<int> bitsizes = {60, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+                                       40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+                                       60};
 //    const std::vector<int> bitsizes = {60, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,30,30,30,30,30,30,30,30,30,30,30,30, 60};
 //    const std::vector<int> bitsizes = {49, 40, 40, 40, 49};
     u_int nb_rescaling = bitsizes.size() - 2;
     //Slot dimension
-    const size_t dimension = poly_modulus_degree/2;
+    const size_t dimension = poly_modulus_degree / 2;
     //scale for encoding
     int power_of_scale = 40;
     double scale = pow(2.0, power_of_scale);
 
 
     // Seal context set up, this checks if the parameters make sense
-    file_output_results << "\t\t --- Information about computations ---" << std::endl;
+    file_output_results << "\t\t --- Information about computations ---"
+                        << std::endl;
     seal::SEALContext context(parms);
     PrintParametersSEAL(context, file_output_results);
     file_output_results << "|    Scale: 2^" << power_of_scale << std::endl;
-    file_output_results << "|    Number of rescaling allowed: " << nb_rescaling << std::endl;
+    file_output_results << "|    Number of rescaling allowed: " << nb_rescaling
+                        << std::endl;
     file_output_results << "\\" << std::endl << std::endl;
-    file_output_results << "Dimension of the vector of inputs: " << dimension << std::endl;
+    file_output_results << "Dimension of the vector of inputs: " << dimension
+                        << std::endl;
 //    cout << "The vectors of inputs are filled with doubles between " << LOWER_BOUND << " and " << UPPER_BOUND << endl;
 //    cout << "The vectors of inputs are filled with doubles between " << exp(LOWER_BOUND) << " and " << exp(UPPER_BOUND) << endl;
 //    cout << "The vectors of inputs are filled with doubles between " << -exp(LOWER_BOUND) << " and " << -exp(UPPER_BOUND) << endl;
@@ -88,7 +101,8 @@ int main () {
 
     seal::RelinKeys relin_keys;
     {
-        Stopwatch sw("Generation of the relinearisation key", file_output_results, 1);
+        Stopwatch sw("Generation of the relinearisation key",
+                     file_output_results, 1);
         keygen.create_relin_keys(relin_keys);
         std::ofstream fs("../keys/relin.key", std::ios::binary);
         relin_keys.save(fs);
@@ -110,24 +124,33 @@ int main () {
 //    cout << "Number of slots: " << slot_count << endl;
 
 
-    double a = 0.3345345632;
+    double a = 0.145345632;
     double b = 0.4;
 
     double approx = a - b;
+    std::cout << "a - b est egale à " << approx << std::endl;
     double tmp_res;
-    int loop = 10;
-    for (int i = 0; i < loop; ++i) {
-        tmp_res = f1(approx);
+    int loop_g = 10;
+    int loop_f = 0;
+    for (int i = 0; i < loop_g; ++i) {
+        tmp_res = g2(approx);
         approx = tmp_res;
-        std::cout << "La valeur est egale a " << approx << std::endl;
+        std::cout << "La valeur approx est egale a " << approx << " après "
+        << i+1 << " application de g1" << std::endl;
     }
-    approx+= 1;
-    approx /= 2;
-    std::cout << "La valeur recherchée après " << loop << " composition de f est egale a " << approx << std::endl;
+    for (int i = 0; i < loop_f; ++i) {
+        tmp_res = f2(approx);
+        approx = tmp_res;
+        std::cout << "La valeur approx est egale a " << approx << " après "
+                  << i+1 << " application de f2" << std::endl;
+    }
+    final_approx_inplace(approx);
+    std::cout << "La valeur recherchée après la derniere operation est egale a "
+    << approx << std::endl;
 
     seal::Plaintext approx_pt;
     seal::Ciphertext approx_ct, approx_result_ct;
-    encoder.encode(a-b, scale, approx_pt);
+    encoder.encode(a - b, scale, approx_pt);
     encryptor.encrypt(approx_pt, approx_ct);
     {
         std::ofstream fs("../ciphertexts/approx_result.ct", std::ios::binary);
@@ -139,18 +162,23 @@ int main () {
     encoder.decode(tmp_pt, tmp_dec);
     PrintVectorUntilN(tmp_dec, 10);
 
-    for (int i = 0; i < 6; ++i) {
-        std::cout << " c'est la " << i +1 << " application de f" << std::endl;
+    for (int i = 0; i < 4; ++i) {
+        std::cout << "il reste " << approx_result_ct.coeff_modulus_size() << " de multiplicative "
+                                                         "depth" <<
+        std::endl;
+        std::cout << " c'est la " << i + 1 << " application de g2" << std::endl;
         std::ifstream is;
         is.open("../ciphertexts/approx_result.ct", std::ios::binary);
         seal::Ciphertext tmp_approx;
         tmp_approx.load(context, is);
         is.close();
-        enc_f1(approx_ct, approx_result_ct, encoder, decryptor, evaluator, gal_keys, relin_keys, scale);
+        enc_g2(tmp_approx, approx_result_ct, encoder, decryptor, evaluator,
+                relin_keys, scale);
         std::ofstream fs("../ciphertexts/approx_result.ct", std::ios::binary);
         approx_result_ct.save(fs);
     }
-    enc_final_output_inplace(approx_result_ct, encoder, decryptor, evaluator, gal_keys, relin_keys, scale);
+    enc_final_approx_inplace(approx_result_ct, encoder, decryptor, evaluator,
+                         scale);
 
     seal::Plaintext approx_result_pt;
     std::vector<double> approx_result;
@@ -196,7 +224,7 @@ int main () {
     std::string path = "../pict_arrays/";
     std::ifstream reader;
     std::vector<std::vector<double>> templates;
-    for (const auto & file : std::filesystem::directory_iterator(path)) {
+    for (const auto &file: std::filesystem::directory_iterator(path)) {
         std::vector<double> tmp_vect = ParseEncoding(reader, file.path());
         FillVectorUntilN(tmp_vect, encoder.slot_count(), 0.0);
         templates.push_back(tmp_vect);
@@ -205,16 +233,18 @@ int main () {
     // Encryption of the template
     std::vector<seal::Plaintext> templates_pt;
     {
-        Stopwatch sw("Encoding of the templates as plaintexts", file_output_results, 1);
+        Stopwatch sw("Encoding of the templates as plaintexts",
+                     file_output_results, 1);
         seal::Plaintext temp_pt;
         for (int i = 0; i < templates.size(); ++i) {
-            encoder.encode(templates[i], scale,temp_pt);
+            encoder.encode(templates[i], scale, temp_pt);
             templates_pt.push_back(temp_pt);
         }
     }
     std::vector<seal::Ciphertext> templates_ct;
     {
-        Stopwatch sw("Encryption of the templates", file_output_results, templates_pt.size());
+        Stopwatch sw("Encryption of the templates", file_output_results,
+                     templates_pt.size());
         seal::Ciphertext temp_ct;
         for (int i = 0; i < templates_pt.size(); ++i) {
             encryptor.encrypt(templates_pt[i], temp_ct);
@@ -223,7 +253,8 @@ int main () {
     }
     //Save the ciphertext in a file
     {
-        Stopwatch sw("Serialisation of the encrypted templates", file_output_results, templates_pt.size());
+        Stopwatch sw("Serialisation of the encrypted templates",
+                     file_output_results, templates_pt.size());
         for (int i = 0; i < templates_ct.size(); ++i) {
             std::string file_name_ct = "../ciphertexts/template";
             file_name_ct.append(std::to_string(i + 1));
@@ -236,15 +267,16 @@ int main () {
     // Server side
     // Create of the signature key of the server
     EVP_PKEY *sig_key_server = NULL;
-    EVP_PKEY_CTX *context_sig_server = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, NULL);
+    EVP_PKEY_CTX *context_sig_server = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519,
+                                                           NULL);
     EVP_PKEY_keygen_init(context_sig_server);
     EVP_PKEY_keygen(context_sig_server, &sig_key_server);
     {
-        Stopwatch sw("Generation of the public key for signature of the server", file_output_results, 1);
+        Stopwatch sw("Generation of the public key for signature of the server",
+                     file_output_results, 1);
         FILE *file;
         file = fopen("../keys/signature_server_pub.key", "wb");
-        if (file == NULL)
-        {
+        if (file == NULL) {
             perror("Error opening file to save public signature key.");
             return EXIT_FAILURE;
         }
@@ -252,11 +284,12 @@ int main () {
         fclose(file);
     }
     {
-        Stopwatch sw("Generation of the private key for signature of the server", file_output_results, 1);
+        Stopwatch sw(
+                "Generation of the private key for signature of the server",
+                file_output_results, 1);
         FILE *file;
         file = fopen("../keys/signature_server_priv.key", "wb");
-        if (file == NULL)
-        {
+        if (file == NULL) {
             perror("Error opening file to save private signature key.");
             return EXIT_FAILURE;
         }
@@ -285,8 +318,9 @@ int main () {
     // Encryption of the template
     seal::Plaintext sample_pt;
     {
-        Stopwatch sw("Encoding of the sample as a plaintext", file_output_results, 1);
-        encoder.encode(sample, scale,sample_pt);
+        Stopwatch sw("Encoding of the sample as a plaintext",
+                     file_output_results, 1);
+        encoder.encode(sample, scale, sample_pt);
     }
     seal::Ciphertext sample_ct;
     {
@@ -352,33 +386,46 @@ int main () {
 
     seal::Ciphertext euc_dist_ct;
     {
-        Stopwatch sw("HE: Computation of the euclidean distance (first part of the function f) between the template and the sample", file_output_results, 1);
-        enc_euclidean_dist(templates_ct[15], sample_ct, euc_dist_ct, encoder, evaluator, gal_keys, relin_keys, scale);
+        Stopwatch sw(
+                "HE: Computation of the euclidean distance (first part of the function f) between the template and the sample",
+                file_output_results, 1);
+        enc_euclidean_dist(templates_ct[15], sample_ct, euc_dist_ct, encoder,
+                           evaluator, gal_keys, relin_keys, scale);
     }
 
     seal::Plaintext enc_euclidean_dist_pt;
     std::vector<double> euclidean_dist_dec;
     {
-        Stopwatch sw("HE: Decryption of the euclidean distance (first part of the function f) between the template and the sample", file_output_results, 1);
+        Stopwatch sw(
+                "HE: Decryption of the euclidean distance (first part of the function f) between the template and the sample",
+                file_output_results, 1);
         decryptor.decrypt(euc_dist_ct, enc_euclidean_dist_pt);
     }
     {
-        Stopwatch sw("HE: Decoding of the euclidean distance (first part of the function f) between the template and the sample", file_output_results, 1);
+        Stopwatch sw(
+                "HE: Decoding of the euclidean distance (first part of the function f) between the template and the sample",
+                file_output_results, 1);
         encoder.decode(enc_euclidean_dist_pt, euclidean_dist_dec);
     }
 
 //    PrintVector(euclidean_dist_dec);
 
 //    verification of the result
-    file_output_results << "Verification if the ciphertext euclidean distance calculation is accurate." << std::endl;
+    file_output_results
+            << "Verification if the ciphertext euclidean distance calculation is accurate."
+            << std::endl;
     double euc_dist_true = euclidean_distance(templates[15], sample);
-    file_output_results << "The true result is " << euc_dist_true << " and the decrypted result is " << euclidean_dist_dec[0] << std::endl;
+    file_output_results << "The true result is " << euc_dist_true
+                        << " and the decrypted result is "
+                        << euclidean_dist_dec[0] << std::endl;
 
-    std::vector<double> bound = {0.4}; // this choice is based on the python library face_recognition
+    std::vector<double> bound = {
+            0.4}; // this choice is based on the python library face_recognition
     seal::Plaintext bound_pt;
     encoder.encode(bound, scale, bound_pt);
     {
-        Stopwatch sw("HE: Computation of the end of the function f", file_output_results,1);
+        Stopwatch sw("HE: Computation of the end of the function f",
+                     file_output_results, 1);
         evaluator.rescale_to_next_inplace(euc_dist_ct);
         evaluator.mod_switch_to_next_inplace(bound_pt);
         euc_dist_ct.scale() = scale;
@@ -394,13 +441,16 @@ int main () {
     // Server creates the plaintext for Tau
     seal::Plaintext tau_pt;
     {
-        Stopwatch sw("Generation of tau, encoding and modulus switch for computation.", file_output_results,1);
+        Stopwatch sw(
+                "Generation of tau, encoding and modulus switch for computation.",
+                file_output_results, 1);
         encoder.encode(tau, scale, tau_pt);
-    // Server applies g function
+        // Server applies g function
         evaluator.mod_switch_to_next_inplace(tau_pt);
     }
     {
-        Stopwatch sw("HE: Computation of the function g", file_output_results,1);
+        Stopwatch sw("HE: Computation of the function g", file_output_results,
+                     1);
         evaluator.multiply_plain_inplace(euc_dist_ct, tau_pt);
     }
     file_output_results << "Calculation of the token y completed." << std::endl;
@@ -415,25 +465,26 @@ int main () {
     for (int i = 0; i < v_msg_token.size(); ++i) {
         msg_token[i] = v_msg_token[i];
     }
-    uint8_t* token_sig = NULL;
+    uint8_t *token_sig = NULL;
     size_t token_sig_length = 0;
     //signature of the token by the server
     EVP_MD_CTX *context_sig = EVP_MD_CTX_new();
     EVP_MD_CTX_set_pkey_ctx(context_sig, context_sig_server);
     EVP_MD_CTX_init(context_sig);
-    if (EVP_DigestSignInit(context_sig, &context_sig_server, NULL, NULL, sig_key_server) !=1 ){
+    if (EVP_DigestSignInit(context_sig, &context_sig_server, NULL, NULL,
+                           sig_key_server) != 1) {
         perror("Problem with initialisation of the signature.");
         return EXIT_FAILURE;
     }
 
-    if (EVP_DigestSign(context_sig, token_sig, &token_sig_length , msg_token, sizeof(msg_token)) != 1)
-    {
+    if (EVP_DigestSign(context_sig, token_sig, &token_sig_length, msg_token,
+                       sizeof(msg_token)) != 1) {
         perror("Signature cannot be done.");
         return EXIT_FAILURE;
     }
-    token_sig = (uint8_t*) malloc(token_sig_length * sizeof(uint8_t));
-    if (EVP_DigestSign(context_sig, token_sig, &token_sig_length , msg_token, sizeof(msg_token)) != 1)
-    {
+    token_sig = (uint8_t *) malloc(token_sig_length * sizeof(uint8_t));
+    if (EVP_DigestSign(context_sig, token_sig, &token_sig_length, msg_token,
+                       sizeof(msg_token)) != 1) {
         perror("Signature cannot be done.");
         return EXIT_FAILURE;
     }
@@ -450,11 +501,13 @@ int main () {
     EVP_MD_CTX_set_pkey_ctx(context_verif, context_sig_server);
     EVP_MD_CTX_init(context_verif);
 
-    if (EVP_DigestVerifyInit(context_verif, &context_sig_server, NULL, NULL, sig_key_server) !=1 ){
+    if (EVP_DigestVerifyInit(context_verif, &context_sig_server, NULL, NULL,
+                             sig_key_server) != 1) {
         perror("Problem with initialisation of the verification.");
         return EXIT_FAILURE;
     }
-    if (EVP_DigestVerify(context_verif, token_sig, token_sig_length, msg_token, sizeof(msg_token)) != 1){
+    if (EVP_DigestVerify(context_verif, token_sig, token_sig_length, msg_token,
+                         sizeof(msg_token)) != 1) {
         perror("Verification of the signature cannot be done.");
         return EXIT_FAILURE;
     }
@@ -469,22 +522,33 @@ int main () {
     seal::Plaintext token_pt;
     std::vector<double> token;
     {
-        Stopwatch sw("HE: Decryption and decoding of the token.", file_output_results,1);
+        Stopwatch sw("HE: Decryption and decoding of the token.",
+                     file_output_results, 1);
         decryptor.decrypt(euc_dist_ct, token_pt);
         encoder.decode(token_pt, token);
     }
 
-    if (token[0] < 0){
-        file_output_results << "The authentication was successful and the token " << token[0] << " is usable to access to the desired service." << std::endl;
-    }
-    else {
-        file_output_results << "The authentication was unsuccessful and the token " << token[0] << " is not usable to access to the desired service." << std::endl;
+    if (token[0] < 0) {
+        file_output_results
+                << "The authentication was successful and the token "
+                << token[0] << " is usable to access to the desired service."
+                << std::endl;
+    } else {
+        file_output_results
+                << "The authentication was unsuccessful and the token "
+                << token[0]
+                << " is not usable to access to the desired service."
+                << std::endl;
     }
 
 
     auto end_time_full = std::chrono::high_resolution_clock::now();
-    auto duration_full = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_full - start_time_full);
-    file_output_results << std::endl << std::endl << std::endl << "The full protocol has taken " << duration_full.count() << " milliseconds." << std::endl;
+    auto duration_full = std::chrono::duration_cast<std::chrono::milliseconds>(
+            end_time_full - start_time_full);
+    file_output_results << std::endl << std::endl << std::endl
+                        << "The full protocol has taken "
+                        << duration_full.count() << " milliseconds."
+                        << std::endl;
 
     /*
      * END OF THE PROTOCOL

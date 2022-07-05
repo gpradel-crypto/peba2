@@ -6,26 +6,26 @@
 #define THREATS_SEAL_MATH_H
 
 
-#include <seal/seal.h>
-
-
 double manhattan_distance(std::vector<double> v1, std::vector<double> v2);
+
 double euclidean_distance(std::vector<double> v1, std::vector<double> v2);
 
-void enc_manhattan_dist(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2, seal::Ciphertext &ctdest, seal::CKKSEncoder &encoder,
-                        seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys);
+void final_approx_inplace(double& x);
 
-void enc_euclidean_dist(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2, seal::Ciphertext &ctdest, seal::CKKSEncoder &encoder,
-                        seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys, const seal::RelinKeys &relin_keys, const double scale);
-double polynomial_approx_sign(double x);
-double comp_approx(double x);
 double f1(double x);
+
 double f2(double x);
+
 double f3(double x);
-void enc_f1(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest, seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
-            seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys, const seal::RelinKeys &relin_keys, const double scale);
-void enc_final_output_inplace(seal::Ciphertext &ct, seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
-                              seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys,
-                              const seal::RelinKeys &relin_keys, const double scale);
-void decrypt_decode_print(seal::Ciphertext &ct, seal::CKKSEncoder &encoder, seal::Decryptor &decryptor);
+
+double f4(double x);
+
+double g1(double x);
+
+double g2(double x);
+
+double g3(double x);
+
+double g4(double x);
+
 #endif //THREATS_SEAL_MATH_H
