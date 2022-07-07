@@ -157,71 +157,70 @@ int main() {
     seal::Evaluator evaluator(context);
     seal::Decryptor decryptor(context, secret_key);
     seal::CKKSEncoder encoder(context);
-//    size_t slot_count = encoder.slot_count();
-//    cout << "Number of slots: " << slot_count << endl;
 
 
-    double a = 0.145345632;
-    double b = 0.4;
 
-    double approx = a - b;
-    std::cout << "a - b est egale à " << approx << std::endl;
-    double tmp_res;
-    int loop_g = 1;
-    int loop_f = 2;
-    for (int i = 0; i < loop_g; ++i) {
-        tmp_res = g4(approx);
-        approx = tmp_res;
-        std::cout << "La valeur approx est egale a " << approx << " après "
-        << i+1 << " application de g4" << std::endl;
-    }
-    for (int i = 0; i < loop_f; ++i) {
-        tmp_res = f4(approx);
-        approx = tmp_res;
-        std::cout << "La valeur approx est egale a " << approx << " après "
-                  << i+1 << " application de f4" << std::endl;
-    }
-    final_approx_inplace(approx);
-    std::cout << "La valeur recherchée après la derniere operation est egale a "
-    << approx << std::endl;
-
-    seal::Plaintext approx_pt;
-    seal::Ciphertext approx_ct, approx_result_ct;
-    encoder.encode(a - b, scale, approx_pt);
-    encryptor.encrypt(approx_pt, approx_ct);
-    {
-        std::ofstream fs("../ciphertexts/approx_result.ct", std::ios::binary);
-        approx_ct.save(fs);
-    }
-    seal::Plaintext tmp_pt;
-    std::vector<double> tmp_dec;
-    decryptor.decrypt(approx_ct, tmp_pt);
-    encoder.decode(tmp_pt, tmp_dec);
-    PrintVectorUntilN(tmp_dec, 10);
-
-    for (int i = 0; i < 3; ++i) {
-        std::cout << "il reste " << approx_result_ct.coeff_modulus_size() << " de multiplicative "
-                                                         "depth" <<
-        std::endl;
-        std::cout << " c'est la " << i + 1 << " application de g4" << std::endl;
-        std::ifstream is;
-        is.open("../ciphertexts/approx_result.ct", std::ios::binary);
-        seal::Ciphertext tmp_approx;
-        tmp_approx.load(context, is);
-        is.close();
-        enc_g4(tmp_approx, approx_result_ct, encoder, decryptor, evaluator,
-                relin_keys, scale);
-        std::ofstream fs("../ciphertexts/approx_result.ct", std::ios::binary);
-        approx_result_ct.save(fs);
-    }
-    enc_final_approx_inplace(approx_result_ct, encoder, decryptor, evaluator,
-                         scale);
-
-    seal::Plaintext approx_result_pt;
-    std::vector<double> approx_result;
-    decryptor.decrypt(approx_result_ct, approx_result_pt);
-    encoder.decode(approx_result_pt, approx_result);
-    PrintVectorUntilN(approx_result, 10);
+//    double a = 0.145345632;
+//    double b = 0.4;
+//
+//    double approx = a - b;
+//    std::cout << "a - b est egale à " << approx << std::endl;
+//    double tmp_res;
+//    int loop_g = 1;
+//    int loop_f = 2;
+//    for (int i = 0; i < loop_g; ++i) {
+//        tmp_res = g4(approx);
+//        approx = tmp_res;
+//        std::cout << "La valeur approx est egale a " << approx << " après "
+//        << i+1 << " application de g4" << std::endl;
+//    }
+//    for (int i = 0; i < loop_f; ++i) {
+//        tmp_res = f4(approx);
+//        approx = tmp_res;
+//        std::cout << "La valeur approx est egale a " << approx << " après "
+//                  << i+1 << " application de f4" << std::endl;
+//    }
+//    final_approx_inplace(approx);
+//    std::cout << "La valeur recherchée après la derniere operation est egale a "
+//    << approx << std::endl;
+//
+//    seal::Plaintext approx_pt;
+//    seal::Ciphertext approx_ct, approx_result_ct;
+//    encoder.encode(a - b, scale, approx_pt);
+//    encryptor.encrypt(approx_pt, approx_ct);
+//    {
+//        std::ofstream fs("../ciphertexts/approx_result.ct", std::ios::binary);
+//        approx_ct.save(fs);
+//    }
+//    seal::Plaintext tmp_pt;
+//    std::vector<double> tmp_dec;
+//    decryptor.decrypt(approx_ct, tmp_pt);
+//    encoder.decode(tmp_pt, tmp_dec);
+//    PrintVectorUntilN(tmp_dec, 10);
+//
+//    for (int i = 0; i < 3; ++i) {
+//        std::cout << "il reste " << approx_result_ct.coeff_modulus_size() << " de multiplicative "
+//                                                         "depth" <<
+//        std::endl;
+//        std::cout << " c'est la " << i + 1 << " application de g4" << std::endl;
+//        std::ifstream is;
+//        is.open("../ciphertexts/approx_result.ct", std::ios::binary);
+//        seal::Ciphertext tmp_approx;
+//        tmp_approx.load(context, is);
+//        is.close();
+//        enc_g4(tmp_approx, approx_result_ct, encoder, decryptor, evaluator,
+//                relin_keys, scale);
+//        std::ofstream fs("../ciphertexts/approx_result.ct", std::ios::binary);
+//        approx_result_ct.save(fs);
+//    }
+//    enc_final_approx_inplace(approx_result_ct, encoder, decryptor, evaluator,
+//                         scale);
+//
+//    seal::Plaintext approx_result_pt;
+//    std::vector<double> approx_result;
+//    decryptor.decrypt(approx_result_ct, approx_result_pt);
+//    encoder.decode(approx_result_pt, approx_result);
+//    PrintVectorUntilN(approx_result, 10);
 
 
 //    // Create of the signature key of the client
