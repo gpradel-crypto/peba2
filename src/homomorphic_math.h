@@ -34,12 +34,32 @@ void enc_f2(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
             seal::Evaluator &evaluator,
             const seal::RelinKeys &relin_keys, const double scale);
 
+void enc_f3(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
+            seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
+            seal::Evaluator &evaluator,
+            const seal::RelinKeys &relin_keys, const double scale);
+
+void enc_f4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
+            seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
+            seal::Evaluator &evaluator,
+            const seal::RelinKeys &relin_keys, const double scale);
+
 void enc_g1(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
             seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
             seal::Evaluator &evaluator,
             const seal::RelinKeys &relin_keys, const double scale);
 
 void enc_g2(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
+            seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
+            seal::Evaluator &evaluator,
+            const seal::RelinKeys &relin_keys, const double scale);
+
+void enc_g3(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
+            seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
+            seal::Evaluator &evaluator,
+            const seal::RelinKeys &relin_keys, const double scale);
+
+void enc_g4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
             seal::CKKSEncoder &encoder, seal::Decryptor &decryptor,
             seal::Evaluator &evaluator,
             const seal::RelinKeys &relin_keys, const double scale);

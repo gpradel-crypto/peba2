@@ -2,13 +2,23 @@ import os
 import pickle
 import face_recognition
 import numpy as np
+import time
+import sys
+
 
 directory = 'pictures'
+
+# start the clock
+start_time = time.time()
+start_cpu_time = time.process_time()
+
+cnt=0
 
 for filename in os.listdir(directory):
     f = os.path.join(directory, filename)
     # checking if it is a file
     if os.path.isfile(f):
+        cnt += 1
         image = face_recognition.load_image_file(f)
         list_of_face_encodings = face_recognition.face_encodings(image)
         # encoding = np.array(list_of_face_encodings[0].tolist())
@@ -28,6 +38,19 @@ for filename in os.listdir(directory):
             # fp.writelines(encoding)
             # fp.writelines(format_encoding)
 
+#stop the clock
+end_cpu_time = time.process_time()
+end_time = time.time()
 
+
+#get the execution time
+elapsed_time = end_time - start_time
+elapsed_cpu_time = end_cpu_time - start_cpu_time
+
+with open('results_python.data', 'w') as f:
+    print('Initialisation of the database of pictures.', file=f)
+    print(f'{cnt} pictures were encoded.', file=f)
+    print('Execution clock time: ', elapsed_time, ' seconds', file=f)
+    print('Execution CPU time: ', elapsed_cpu_time, ' seconds', file=f)
 
 

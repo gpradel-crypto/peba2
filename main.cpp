@@ -2,6 +2,7 @@
 // Created by gpr on 16/03/2022.
 //
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <openssl/crypto.h>
@@ -85,35 +86,71 @@ int main() {
     seal::KeyGenerator keygen(context);
     seal::SecretKey secret_key;
     {
-        Stopwatch sw("Generation of the secret key", file_output_results, 1);
-        secret_key = keygen.secret_key();
-        std::ofstream fs("../keys/secret.key", std::ios::binary);
-        secret_key.save(fs);
+        std::string filename = "../keys/secret.key";
+        if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
+        {
+            Stopwatch sw("Key already created, loading of the secret key", file_output_results, 1);
+            std::ifstream fs(filename, std::ios::binary);
+            secret_key.load(context, fs);
+        }
+        else {
+            std::ofstream fs(filename, std::ios::binary);
+            Stopwatch sw("Generation of the secret key", file_output_results, 1);
+            secret_key = keygen.secret_key();
+            secret_key.save(fs);
+        }
     }
 
     seal::PublicKey public_key;
     {
-        Stopwatch sw("Generation of the public key", file_output_results, 1);
-        keygen.create_public_key(public_key);
-        std::ofstream fs("../keys/public.key", std::ios::binary);
-        public_key.save(fs);
+        std::string filename = "../keys/public.key";
+        if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
+        {
+            Stopwatch sw("Key already created, loading of the public key", file_output_results, 1);
+            std::ifstream fs(filename, std::ios::binary);
+            public_key.load(context, fs);
+        }
+        else {
+            Stopwatch sw("Generation of the public key", file_output_results, 1);
+            keygen.create_public_key(public_key);
+            std::ofstream fs(filename, std::ios::binary);
+            public_key.save(fs);
+        }
     }
 
     seal::RelinKeys relin_keys;
     {
-        Stopwatch sw("Generation of the relinearisation key",
-                     file_output_results, 1);
-        keygen.create_relin_keys(relin_keys);
-        std::ofstream fs("../keys/relin.key", std::ios::binary);
-        relin_keys.save(fs);
+        std::string filename = "../keys/relin.key";
+        if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
+        {
+            Stopwatch sw("Key already created, loading of the relinearisation key", file_output_results, 1);
+            std::ifstream fs(filename, std::ios::binary);
+            relin_keys.load(context, fs);
+        }
+        else {
+            Stopwatch sw("Generation of the relinearisation key",
+                         file_output_results, 1);
+            keygen.create_relin_keys(relin_keys);
+            std::ofstream fs(filename, std::ios::binary);
+            relin_keys.save(fs);
+        }
     }
 
     seal::GaloisKeys gal_keys;
     {
-        Stopwatch sw("Generation of the galois key", file_output_results, 1);
-//        keygen.create_galois_keys(gal_keys);
-//        std::ofstream fs("../keys/galois.key", std::ios::binary);
-//        gal_keys.save(fs);
+        std::string filename = "../keys/galois.key";
+        if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
+        {
+            Stopwatch sw("Key already created, loading of the galois keys", file_output_results, 1);
+            std::ifstream fs(filename, std::ios::binary);
+            gal_keys.load(context, fs);
+        }
+        else {
+            Stopwatch sw("Generation of the galois keys", file_output_results, 1);
+            keygen.create_galois_keys(gal_keys);
+            std::ofstream fs(filename, std::ios::binary);
+            gal_keys.save(fs);
+        }
     }
 
     seal::Encryptor encryptor(context, public_key);
@@ -130,19 +167,19 @@ int main() {
     double approx = a - b;
     std::cout << "a - b est egale à " << approx << std::endl;
     double tmp_res;
-    int loop_g = 10;
-    int loop_f = 0;
+    int loop_g = 1;
+    int loop_f = 2;
     for (int i = 0; i < loop_g; ++i) {
-        tmp_res = g2(approx);
+        tmp_res = g4(approx);
         approx = tmp_res;
         std::cout << "La valeur approx est egale a " << approx << " après "
-        << i+1 << " application de g1" << std::endl;
+        << i+1 << " application de g4" << std::endl;
     }
     for (int i = 0; i < loop_f; ++i) {
-        tmp_res = f2(approx);
+        tmp_res = f4(approx);
         approx = tmp_res;
         std::cout << "La valeur approx est egale a " << approx << " après "
-                  << i+1 << " application de f2" << std::endl;
+                  << i+1 << " application de f4" << std::endl;
     }
     final_approx_inplace(approx);
     std::cout << "La valeur recherchée après la derniere operation est egale a "
@@ -162,17 +199,17 @@ int main() {
     encoder.decode(tmp_pt, tmp_dec);
     PrintVectorUntilN(tmp_dec, 10);
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 3; ++i) {
         std::cout << "il reste " << approx_result_ct.coeff_modulus_size() << " de multiplicative "
                                                          "depth" <<
         std::endl;
-        std::cout << " c'est la " << i + 1 << " application de g2" << std::endl;
+        std::cout << " c'est la " << i + 1 << " application de g4" << std::endl;
         std::ifstream is;
         is.open("../ciphertexts/approx_result.ct", std::ios::binary);
         seal::Ciphertext tmp_approx;
         tmp_approx.load(context, is);
         is.close();
-        enc_g2(tmp_approx, approx_result_ct, encoder, decryptor, evaluator,
+        enc_g4(tmp_approx, approx_result_ct, encoder, decryptor, evaluator,
                 relin_keys, scale);
         std::ofstream fs("../ciphertexts/approx_result.ct", std::ios::binary);
         approx_result_ct.save(fs);
