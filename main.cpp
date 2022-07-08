@@ -77,10 +77,6 @@ int main() {
     file_output_results << "\\" << std::endl << std::endl;
     file_output_results << "Dimension of the vector of inputs: " << dimension
                         << std::endl;
-//    cout << "The vectors of inputs are filled with doubles between " << LOWER_BOUND << " and " << UPPER_BOUND << endl;
-//    cout << "The vectors of inputs are filled with doubles between " << exp(LOWER_BOUND) << " and " << exp(UPPER_BOUND) << endl;
-//    cout << "The vectors of inputs are filled with doubles between " << -exp(LOWER_BOUND) << " and " << -exp(UPPER_BOUND) << endl;
-
 
     //Set up the keys
     seal::KeyGenerator keygen(context);
@@ -261,9 +257,15 @@ int main() {
     std::ifstream reader;
     std::vector<std::vector<double>> templates;
     for (const auto &file: std::filesystem::directory_iterator(path)) {
-        std::vector<double> tmp_vect = ParseEncoding(reader, file.path());
-        FillVectorUntilN(tmp_vect, encoder.slot_count(), 0.0);
-        templates.push_back(tmp_vect);
+        //the if is only there to avoid to parse the ".gitkeep" file, more robust solutions would be preferable
+//        if (file.path().string()[15] != '.') {
+        if ( file.path().string().find(".gitkeep") == std::string::npos ) {
+//            std::cout << file.path().string() << std::endl;
+            std::vector<double> tmp_vect = ParseEncoding(reader, file.path());
+//            PrintVectorUntilN(tmp_vect, 30);
+            FillVectorUntilN(tmp_vect, encoder.slot_count(), 0.0);
+            templates.push_back(tmp_vect);
+        }
     }
 
     // Encryption of the template
@@ -368,57 +370,13 @@ int main() {
         std::ofstream fs("../ciphertexts/sample.ct", std::ios::binary);
         sample_ct.save(fs);
     }
-    //Write the ciphertext as a char* for signature.
-//    std::vector<char> v_msg_sample_ct = FromFileToVect("../ciphertexts/sample.ct");
-//    unsigned char msg_sample_ct[v_msg_sample_ct.size()];
-//    for (int i = 0; i < v_msg_sample_ct.size(); ++i) {
-//        msg_sample_ct[i] = v_msg_sample_ct[i];
-//    }
-//    uint8_t* sample_ct_sig = NULL;
-//    size_t sample_ct_sig_length = 0;
-//    //signature of the ciphertext by the client
-//    EVP_MD_CTX *context_sig = EVP_MD_CTX_new();
-////    EVP_MD_CTX_set_pkey_ctx(context_sig, context_sig_client);
-//    EVP_MD_CTX_init(context_sig);
-////    if (EVP_DigestSignInit(context_sig, &context_sig_client, NULL, NULL, sig_key_client) !=1 ){
-////        perror("Problem with initialisation of the signature.");
-////        return EXIT_FAILURE;
-////    }
-//    if (EVP_DigestSign(context_sig, sample_ct_sig, &sample_ct_sig_length , msg_sample_ct, sizeof(msg_sample_ct)) != 1)
-//    {
-//        perror("Signature cannot be done.");
-//        return EXIT_FAILURE;
-//    }
-//    sample_ct_sig = (uint8_t*) malloc(sample_ct_sig_length * sizeof(uint8_t));
-//    if (EVP_DigestSign(context_sig, sample_ct_sig, &sample_ct_sig_length , msg_sample_ct, sizeof(msg_sample_ct)) != 1)
-//    {
-//        perror("Signature cannot be done.");
-//        return EXIT_FAILURE;
-//    }
-//    EVP_MD_CTX_free(context_sig);
 
+    // The Client sends the sample to the Server for the computations
 
-    //Client sends the sample encrypted to the server
-    // Server side
+    //Server side
 
-//    //Verification of the signature, if wrong then quit
-//    EVP_MD_CTX *context_verif = EVP_MD_CTX_new();
-////    EVP_MD_CTX_set_pkey_ctx(context_verif, context_sig_client);
-//    EVP_MD_CTX_init(context_verif);
-//
-////    if (EVP_DigestVerifyInit(context_verif, &context_sig_client, NULL, NULL, sig_key_client) !=1 ){
-////        perror("Problem with initialisation of the verification.");
-////        return EXIT_FAILURE;
-////    }
-//    if (EVP_DigestVerify(context_verif, sample_ct_sig, sample_ct_sig_length, msg_sample_ct, sizeof(msg_sample_ct)) != 1){
-//        perror("Verification of the signature cannot be done.");
-//        return EXIT_FAILURE;
-//    }
-//
-//    //No longer need of the signature items for the client
-//    EVP_MD_CTX_free(context_verif);
-////    EVP_PKEY_free(sig_key_client);
-//    OPENSSL_free(sample_ct_sig);
+    // To measure the time of the f function
+    auto start_time_function_f = std::chrono::high_resolution_clock::now();
 
     seal::Ciphertext euc_dist_ct;
     {
@@ -428,6 +386,8 @@ int main() {
         enc_euclidean_dist(templates_ct[15], sample_ct, euc_dist_ct, encoder,
                            evaluator, gal_keys, relin_keys, scale);
     }
+
+
 
     seal::Plaintext enc_euclidean_dist_pt;
     std::vector<double> euclidean_dist_dec;
@@ -444,9 +404,10 @@ int main() {
         encoder.decode(enc_euclidean_dist_pt, euclidean_dist_dec);
     }
 
-//    PrintVector(euclidean_dist_dec);
+    PrintVectorUntilN(euclidean_dist_dec, 10);
 
-//    verification of the result
+
+    //    verification of the result
     file_output_results
             << "Verification if the ciphertext euclidean distance calculation is accurate."
             << std::endl;
@@ -455,18 +416,35 @@ int main() {
                         << " and the decrypted result is "
                         << euclidean_dist_dec[0] << std::endl;
 
+    /*
+     * Choice of a bound, and computation of the comparison between the euclidean distance and this bound
+     * We use the technique from Cheon et al. in "Efficient Homomorphic Comparison Methods with Optimal Complexity"
+     * Asiacrypt 2020
+     *              {1 if a > b
+     * comp(a,b) =  {1/2 if a = b
+     *              {0 if a < b
+     */
     std::vector<double> bound = {
             0.4}; // this choice is based on the python library face_recognition
     seal::Plaintext bound_pt;
     encoder.encode(bound, scale, bound_pt);
     {
-        Stopwatch sw("HE: Computation of the end of the function f",
+        Stopwatch sw("HE: Computation of the difference ",
                      file_output_results, 1);
-        evaluator.rescale_to_next_inplace(euc_dist_ct);
-        evaluator.mod_switch_to_next_inplace(bound_pt);
+        evaluator.mod_switch_to_inplace(bound_pt, euc_dist_ct.parms_id());
         euc_dist_ct.scale() = scale;
         evaluator.sub_plain_inplace(euc_dist_ct, bound_pt);
     }
+
+    auto end_time_function_f = std::chrono::high_resolution_clock::now();
+    auto duration_function_f = std::chrono::duration_cast<std::chrono::microseconds>(end_time_function_f - start_time_function_f);
+
+    file_output_results << std::endl << std::endl << std::endl << "The function f has lasted " << duration_function_f.count() << " milliseconds." << std::endl;
+
+
+
+
+
 
     // Server generates the random number Tau
     double tau = abs(RandomDouble());

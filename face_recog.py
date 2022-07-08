@@ -15,6 +15,10 @@ start_cpu_time = time.process_time()
 cnt=0
 
 for filename in os.listdir(directory):
+    # print(filename)
+    if (filename == '.gitkeep'):
+        # print('I got out of the loop')
+        continue
     f = os.path.join(directory, filename)
     # checking if it is a file
     if os.path.isfile(f):

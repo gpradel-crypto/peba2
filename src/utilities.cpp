@@ -247,6 +247,10 @@ std::vector<char> FromFileToVect(std::string filename){
     return bytes;
 }
 
+/*
+ * Input: a vector of encoded features from a photo given by the Python face_recognition library.
+ * Output: a vector of double that can be used by the SEAL library.
+ */
 std::vector<double> ParseEncoding(std::ifstream& reader, std::filesystem::path file_path) {
     reader.open(file_path);
     if (!reader) {
