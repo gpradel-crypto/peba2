@@ -133,7 +133,7 @@ void PrintVector2FileUntilN(std::vector<std::vector<double>> vect, std::ofstream
 /*
 Helper function: Prints the parameters in a SEALContext.
 */
-void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name)
+void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale)
 {
     auto &context_data = *context.key_context_data();
 
@@ -173,7 +173,7 @@ void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_n
     file_name << ") bits" << std::endl;
     seal::CKKSEncoder encoder(context);
     size_t slot_count = encoder.slot_count();
-    file_name << "|   Number of slots: " << slot_count << std::endl;
+    file_name << "|   Number of slots (dimension of vectors): " << slot_count << std::endl;
 
     /*
     For the BFV scheme print the plain_modulus parameter.
@@ -183,7 +183,11 @@ void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_n
         file_name << "|   plain_modulus: " << context_data.parms().plain_modulus().value() << std::endl;
     }
 
-//    file_name << "\\" << std::endl << std::endl;
+    file_name << "|    Scale: 2^" << power_of_scale << std::endl;
+    file_name << "|    Number of rescaling allowed: " << coeff_modulus_size
+                        << std::endl;
+    file_name << "\\" << std::endl << std::endl;
+
 }
 
 std::vector<double> TransformVectorsToVector(std::vector<std::vector<double>> v) {

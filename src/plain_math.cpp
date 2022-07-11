@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include "math.h"
+#include "plain_math.h"
 
 
 double manhattan_distance(std::vector<double> v1, std::vector<double> v2) {

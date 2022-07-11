@@ -2,8 +2,8 @@
 // Created by gpr on 16/03/2022.
 //
 
-#ifndef THREATS_SEAL_MATH_H
-#define THREATS_SEAL_MATH_H
+#ifndef THREATS_SEAL_PLAIN_MATH_H
+#define THREATS_SEAL_PLAIN_MATH_H
 
 
 double manhattan_distance(std::vector<double> v1, std::vector<double> v2);
@@ -28,4 +28,4 @@ double g3(double x);
 
 double g4(double x);
 
-#endif //THREATS_SEAL_MATH_H
+#endif //THREATS_SEAL_PLAIN_MATH_H
