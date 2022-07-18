@@ -317,7 +317,10 @@ void protocol_p(std::ofstream &file_output_results){
      * comp(a,b) =  {1/2 if a = b
      *              {0 if a < b
      */
-    std::vector<double> bound (dimension, 0.4); // this choice is based on the python library face_recognition
+    std::vector<double> bound(dimension, 0.3);
+    //face_recognition library python has a 0.6 bound for the euclidean distance
+    //here we have the square of the distance, and 0.6^2 = 0.36
+    //we decided to be a bit more strict and compare with 0.3
     seal::Plaintext bound_pt;
     seal::Ciphertext bound_ct;
     {
@@ -516,6 +519,261 @@ void protocol_p(std::ofstream &file_output_results){
     */
 }
 
+void protocol_p_for_accuracy(std::ofstream &file_output_results){
+    /*
+     *
+     * Protocol P execution for accuracy!
+     *  202,509 images from "Deep Learning Face Attributes in the Wild
+     */
+
+    file_output_results << " A subversion of the protocol P will be executed to verify the accuracy of it." << std::endl;
+    file_output_results << " Useless operations for that purpose, e.g. digital signature, are not computed for faster computation." << std::endl << std::endl;
+
+    file_output_results << " Initialisation of the parameters. Done only one time" << std::endl;
+    auto start_time_params = std::chrono::high_resolution_clock::now();
+    //Creation of the homomorphic keys
+    // Seal encryption set up
+    seal::EncryptionParameters parms(seal::scheme_type::ckks);
+    size_t poly_modulus_degree = 32768;
+    parms.set_poly_modulus_degree(poly_modulus_degree);
+    parms.set_coeff_modulus(seal::CoeffModulus::Create(poly_modulus_degree,
+                                                       {60, 40, 40, 40, 40, 40,
+                                                        40, 40, 40, 40, 40, 40,
+                                                        40, 40, 40, 40, 40, 40,
+                                                        40, 40, 60}));
+
+    const std::vector<int> bitsizes = {60, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+                                       40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+                                       60};
+
+    //Slot dimension
+    const size_t dimension = poly_modulus_degree / 2;
+    //scale for encoding
+    int power_of_scale = 40;
+    double scale = pow(2.0, power_of_scale);
+    // Seal context set up, this checks if the parameters make sense
+    file_output_results << "\t\t --- Information about computations ---" << std::endl;
+    seal::SEALContext context(parms);
+    PrintParametersSEAL(context, file_output_results, power_of_scale);
+
+    //Set up the keys
+    seal::KeyGenerator keygen(context);
+    seal::SecretKey secret_key;
+    {
+        std::string filename = "../keys/secret.key";
+        if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
+        {
+            Stopwatch sw("Key already created, loading of the secret key", file_output_results, 1, Unit::millisecs);
+            std::ifstream fs(filename, std::ios::binary);
+            secret_key.load(context, fs);
+        }
+        else {
+            Stopwatch sw("Generation of the secret key", file_output_results, 1, Unit::millisecs);
+            std::ofstream fs(filename, std::ios::binary);
+            secret_key = keygen.secret_key();
+            secret_key.save(fs);
+        }
+    }
+
+    seal::PublicKey public_key;
+    {
+        std::string filename = "../keys/public.key";
+        if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
+        {
+            Stopwatch sw("Key already created, loading of the public key", file_output_results, 1, Unit::millisecs);
+            std::ifstream fs(filename, std::ios::binary);
+            public_key.load(context, fs);
+        }
+        else {
+            Stopwatch sw("Generation of the public key", file_output_results, 1, Unit::millisecs);
+            keygen.create_public_key(public_key);
+            std::ofstream fs(filename, std::ios::binary);
+            public_key.save(fs);
+        }
+    }
+
+    seal::RelinKeys relin_keys;
+    {
+        std::string filename = "../keys/relin.key";
+        if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
+        {
+            Stopwatch sw("Key already created, loading of the relinearisation key", file_output_results, 1, Unit::millisecs);
+            std::ifstream fs(filename, std::ios::binary);
+            relin_keys.load(context, fs);
+        }
+        else {
+            Stopwatch sw("Generation of the relinearisation key",
+                         file_output_results, 1, Unit::secs);
+            keygen.create_relin_keys(relin_keys);
+            std::ofstream fs(filename, std::ios::binary);
+            relin_keys.save(fs);
+        }
+    }
+
+    seal::GaloisKeys gal_keys;
+    {
+        std::string filename = "../keys/galois.key";
+        if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
+        {
+            Stopwatch sw("Key already created, loading of the galois keys", file_output_results, 1, Unit::secs);
+            std::ifstream fs(filename, std::ios::binary);
+            gal_keys.load(context, fs);
+        }
+        else {
+            Stopwatch sw("Generation of the galois keys", file_output_results, 1, Unit::secs);
+            keygen.create_galois_keys(gal_keys);
+            std::ofstream fs(filename, std::ios::binary);
+            gal_keys.save(fs);
+        }
+    }
+
+    seal::Encryptor encryptor(context, public_key);
+    seal::Evaluator evaluator(context);
+    seal::Decryptor decryptor(context, secret_key);
+    seal::CKKSEncoder encoder(context);
+
+    auto end_time_params = std::chrono::high_resolution_clock::now();
+    auto duration_params = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_params - start_time_params);
+    file_output_results << "Parameters and keys were set in " << duration_params.count()/1000.0 << " seconds." << std::endl;
+
+    std::string path = "../pict_arrays/";
+    std::ifstream reader;
+    std::vector<std::vector<double>> templates;
+    std::vector<std::string> mapping_index_file_name;
+    std::ofstream file_mapping("../mapping_index_file_name.data");
+    int cnt_file=0;
+    {
+        Stopwatch sw("Reading encoded pictures files and transforming them in vectors of doubles", file_output_results, 1, Unit::microsecs);
+        for (const auto &file: std::filesystem::directory_iterator(path)) {
+            //the if is only there to avoid to parse the ".gitkeep" file, more robust solutions would be preferable
+            if (file.path().string().find(".gitkeep") == std::string::npos) {
+                cnt_file+=1;
+                mapping_index_file_name.push_back(file.path().string());
+                file_mapping << cnt_file << "\t" << file.path().string() << std::endl;
+                std::vector<double> tmp_vect = ParseEncoding(reader, file.path());
+                FillVectorUntilN(tmp_vect, encoder.slot_count(), 0.0);
+                templates.push_back(tmp_vect);
+            }
+        }
+    }
+    file_mapping.close();
+
+    // Encryption of the template
+    std::vector<seal::Plaintext> templates_pt;
+    {
+        Stopwatch sw("Encoding of the templates as plaintexts",
+                     file_output_results, 1, Unit::millisecs);
+        seal::Plaintext temp_pt;
+        for (int i = 0; i < templates.size(); ++i) {
+            encoder.encode(templates[i], scale, temp_pt);
+            templates_pt.push_back(temp_pt);
+        }
+    }
+    std::vector<seal::Ciphertext> templates_ct;
+    {
+        Stopwatch sw("Encryption of the templates", file_output_results,
+                     templates_pt.size(), Unit::millisecs);
+        seal::Ciphertext temp_ct;
+        for (int i = 0; i < templates_pt.size(); ++i) {
+            encryptor.encrypt(templates_pt[i], temp_ct);
+            templates_ct.push_back(temp_ct);
+        }
+    }
+
+
+    file_output_results << std::endl <<"  ----------- Computation phase --------------" << std::endl;
+    int nb_trials = 100;
+    int result_accuracy = 0; // for the accuracy
+    file_output_results << "The protocol P will be executed " << nb_trials << " times." <<  std::endl;
+    for (int i = 0; i < nb_trials; ++i) {
+        //we choose randomly two vectors from the database
+        int which_sample = RandomIndexForImage(cnt_file-1);
+        int which_template = RandomIndexForImage(cnt_file-1);
+        while (which_sample == which_template)
+            which_template = RandomIndexForImage(cnt_file-1);
+
+        file_output_results << std::endl << "Execution of P number " << i+1 << " between:" << std::endl;
+        file_output_results << "Vector: " << which_sample+1 << " starting by " << templates[which_sample][0] << std::endl;
+        file_output_results << "Vector: " << which_template+1 << " starting by " << templates[which_template][0] << std::endl;
+
+
+        seal::Ciphertext euc_dist_ct;
+        enc_euclidean_dist(templates_ct[which_sample], templates_ct[which_template], euc_dist_ct, encoder,
+                               evaluator, gal_keys, relin_keys, scale);
+
+        std::vector<double> bound(dimension, 0.3);
+        //face_recognition library python has a 0.6 bound for the euclidean distance
+        //here we have the square of the distance, and 0.6^2 = 0.36
+        //we decided to be a bit more strict and compare with 0.3
+        seal::Plaintext bound_pt;
+        seal::Ciphertext bound_ct;
+        encoder.encode(bound, scale, bound_pt);
+        encryptor.encrypt(bound_pt, bound_ct);
+        evaluator.mod_switch_to_inplace(bound_ct, euc_dist_ct.parms_id());
+        euc_dist_ct.scale() = scale;
+        evaluator.sub_inplace(bound_ct, euc_dist_ct);
+
+        seal::Ciphertext b_approx_ct, tmp_approx_ct;
+        enc_g3(bound_ct, b_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
+        enc_f4(b_approx_ct, tmp_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
+        enc_f3(tmp_approx_ct, b_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
+        enc_final_approx_inplace(b_approx_ct, encoder, decryptor, evaluator, scale);
+
+        double tau = abs(RandomDouble());
+
+        // Server creates the plaintext for Tau
+        seal::Plaintext tau_pt;
+        encoder.encode(tau, scale, tau_pt);
+        evaluator.mod_switch_to_inplace(tau_pt, b_approx_ct.parms_id());
+        evaluator.multiply_plain_inplace(b_approx_ct, tau_pt);
+
+        seal::Plaintext token_pt;
+        std::vector<double> token;
+        decryptor.decrypt(b_approx_ct, token_pt);
+        encoder.decode(token_pt, token);
+
+
+        //Protocol P executed as if it would be on cleartexts
+        bool true_P = false;
+        double euc_dist_true = euclidean_distance(templates[which_sample], templates[which_template]);
+        if (euc_dist_true < bound[0])
+            true_P = true;
+        file_output_results << "The square euclidean distance is equal to " << euc_dist_true << std::endl;
+        file_output_results << "The authentication shall ";
+        if (true_P)
+            file_output_results << "succeed." << std::endl;
+        else
+            file_output_results << "fail." << std::endl;
+
+
+
+        //Given it is an approximate calculus, we accepted the following error in the computation for the acceptance of the token
+        bool he_P = false;
+        double error_accepted = 0.001;
+
+        if ((token[0] < (tau / 2.0) + error_accepted) && (token[0] > -error_accepted)) {
+            file_output_results
+                    << "The authentication was unsuccessful and the token "
+                    << token[0]
+                    << " is not usable to access to the desired service."
+                    << std::endl;
+        } else {
+            he_P = true;
+            file_output_results
+                    << "The authentication was successful and the token "
+                    << token[0] << " is usable to access to the desired service."
+                    << std::endl;
+
+        }
+
+        if (true_P == he_P)
+            result_accuracy += 1;
+    }
+    file_output_results << std::endl << "Over " << nb_trials << " executions of P, " << result_accuracy << " were successful." << std::endl;
+    file_output_results << "The accuracy is thus of " << ((1.0*result_accuracy)/nb_trials)*100.0 << "%" <<  std::endl;
+}
+
+
 void test_approx_function(){
 
     //Creation of the homomorphic keys
@@ -666,27 +924,32 @@ void test_approx_function(){
 
 int main() {
 
-    //Time of the full suite of tests
-    auto start_time_full = std::chrono::high_resolution_clock::now();
+//    //Time of the full suite of tests
+//    auto start_time_full = std::chrono::high_resolution_clock::now();
+//
+//    //File in which the results of the protocol p will be written
+//    std::ofstream file_output_results("../results.data");
+//
+//    protocol_p(file_output_results);
+//
+//    auto end_time_full = std::chrono::high_resolution_clock::now();
+//    auto duration_full = std::chrono::duration_cast<std::chrono::milliseconds >(
+//            end_time_full - start_time_full);
+//    file_output_results << std::endl
+//                        << "The full protocol has taken "
+//                        << duration_full.count()/1000.0 << " seconds."
+//                        << std::endl;
+//
+//
+//    file_output_results.close();
+//    std::ifstream file_output_results_display;
+//    file_output_results_display.open("../results.data");
+//    PrintFile(file_output_results_display);
 
-    //File in which the results of the protocol p will be written
-    std::ofstream file_output_results("../results.data");
-
-    protocol_p(file_output_results);
-
-    auto end_time_full = std::chrono::high_resolution_clock::now();
-    auto duration_full = std::chrono::duration_cast<std::chrono::milliseconds >(
-            end_time_full - start_time_full);
-    file_output_results << std::endl
-                        << "The full protocol has taken "
-                        << duration_full.count()/1000.0 << " seconds."
-                        << std::endl;
-
-
-    file_output_results.close();
-    std::ifstream file_output_results_display;
-    file_output_results_display.open("../results.data");
-    PrintFile(file_output_results_display);
+    //File in which the results of the accuracy of the protocol p will be written
+    std::ofstream file_accuracy("../results_accuracy.data");
+    protocol_p_for_accuracy(file_accuracy);
+    file_accuracy.close();
 
     return EXIT_SUCCESS;
 }

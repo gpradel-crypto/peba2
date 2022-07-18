@@ -68,6 +68,7 @@ void PrintVector2File(std::vector<std::vector<double>> vect, std::ofstream& file
 void PrintVector2FileUntilN(std::vector<std::vector<double>> vect, std::ofstream& file_name, int n);
 void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale);
 std::vector<double> TransformVectorsToVector(std::vector<std::vector<double>> v);
+int RandomIndexForImage(int n);
 double RandomDouble(void);
 std::vector<double> CreateVectorInput(size_t dimension);
 std::vector<double> CreateVectorInputChosen(size_t dimension, double value);

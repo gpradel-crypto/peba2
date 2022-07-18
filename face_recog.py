@@ -14,6 +14,7 @@ start_cpu_time = time.process_time()
 
 cnt=0
 
+
 for filename in os.listdir(directory):
     # print(filename)
     if (filename == '.gitkeep'):

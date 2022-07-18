@@ -200,6 +200,13 @@ std::vector<double> TransformVectorsToVector(std::vector<std::vector<double>> v)
     return result;
 }
 
+int RandomIndexForImage(int n) {
+    std::random_device rd;
+    std::default_random_engine engine(rd());
+    std::uniform_int_distribution<int> distrib(0, n);
+    return distrib(engine);
+}
+
 double RandomDouble(void) {
     std::random_device rd;
     std::default_random_engine engine(rd());
