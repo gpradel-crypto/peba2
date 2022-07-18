@@ -46,7 +46,7 @@ public:
         }
         if (unit_ == Unit::secs){
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time_);
-            file_name_ << name_ << "\t" << duration.count()/it*1000.0 << "\tseconds" << std::endl;
+            file_name_ << name_ << "\t" << duration.count()/(it*1000.0) << "\tseconds" << std::endl;
         }
     }
 
@@ -75,5 +75,7 @@ void FillVectorUntilN(std::vector<double>& input, int dimension, double value);
 std::vector<char> FromFileToVect(std::string filename);
 std::vector<double> ParseEncoding(std::ifstream& reader, std::filesystem::path file_path);
 void PrintFile(std::ifstream& reader);
+
+
 
 #endif //THREATS_SEAL_UTILITIES_H

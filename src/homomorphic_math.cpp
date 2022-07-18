@@ -55,9 +55,13 @@ void enc_final_approx_inplace(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,
     evaluator.mod_switch_to_inplace(one_pt, ct.parms_id());
     one_pt.scale() = ct.scale();
     evaluator.add_plain_inplace(ct, one_pt);
+    decrypt_decode_print(ct, encoder, decryptor, "b in the final approx. b + 1");
     evaluator.mod_switch_to_inplace(half_pt, ct.parms_id());
     evaluator.multiply_plain_inplace(ct, half_pt);
+    decrypt_decode_print(ct, encoder, decryptor, "b in the final approx. (b + 1)*0.5");
     evaluator.rescale_to_next_inplace(ct);
+    decrypt_decode_print(ct, encoder, decryptor, "b in the final approx. (b + 1)*0.5 after rescale");
+
 }
 
 
@@ -560,7 +564,8 @@ void enc_g4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
 }
 
 void decrypt_decode_print(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,
-                          seal::Decryptor &decryptor) {
+                          seal::Decryptor &decryptor, std::string message) {
+    std::cout << message << std::endl;
     int until = 10;
     seal::Plaintext tmp_pt;
     std::vector<double> tmp;

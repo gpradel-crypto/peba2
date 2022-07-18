@@ -68,12 +68,12 @@ void protocol_p(std::ofstream &file_output_results){
         std::string filename = "../keys/secret.key";
         if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
         {
-            Stopwatch sw("Key already created, loading of the secret key", file_output_results, 1, Unit::microsecs);
+            Stopwatch sw("Key already created, loading of the secret key", file_output_results, 1, Unit::millisecs);
             std::ifstream fs(filename, std::ios::binary);
             secret_key.load(context, fs);
         }
         else {
-            Stopwatch sw("Generation of the secret key", file_output_results, 1, Unit::microsecs);
+            Stopwatch sw("Generation of the secret key", file_output_results, 1, Unit::millisecs);
             std::ofstream fs(filename, std::ios::binary);
             secret_key = keygen.secret_key();
             secret_key.save(fs);
@@ -85,12 +85,12 @@ void protocol_p(std::ofstream &file_output_results){
         std::string filename = "../keys/public.key";
         if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
         {
-            Stopwatch sw("Key already created, loading of the public key", file_output_results, 1, Unit::microsecs);
+            Stopwatch sw("Key already created, loading of the public key", file_output_results, 1, Unit::millisecs);
             std::ifstream fs(filename, std::ios::binary);
             public_key.load(context, fs);
         }
         else {
-            Stopwatch sw("Generation of the public key", file_output_results, 1, Unit::microsecs);
+            Stopwatch sw("Generation of the public key", file_output_results, 1, Unit::millisecs);
             keygen.create_public_key(public_key);
             std::ofstream fs(filename, std::ios::binary);
             public_key.save(fs);
@@ -102,7 +102,7 @@ void protocol_p(std::ofstream &file_output_results){
         std::string filename = "../keys/relin.key";
         if (std::filesystem::exists(filename) && !std::filesystem::is_empty(filename))
         {
-            Stopwatch sw("Key already created, loading of the relinearisation key", file_output_results, 1, Unit::microsecs);
+            Stopwatch sw("Key already created, loading of the relinearisation key", file_output_results, 1, Unit::millisecs);
             std::ifstream fs(filename, std::ios::binary);
             relin_keys.load(context, fs);
         }
@@ -139,13 +139,13 @@ void protocol_p(std::ofstream &file_output_results){
 
     auto end_time_params = std::chrono::high_resolution_clock::now();
     auto duration_params = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_params - start_time_params);
-    file_output_results << "Parameters and keys were set in " << duration_params.count() << " milliseconds." << std::endl;
+    file_output_results << "Parameters and keys were set in " << duration_params.count()/1000.0 << " seconds." << std::endl;
 
     std::string path = "../pict_arrays/";
     std::ifstream reader;
     std::vector<std::vector<double>> templates;
     {
-        Stopwatch sw("Reading encoding pictures files and their encoding into vectors of doubles", file_output_results, 1, Unit::microsecs);
+        Stopwatch sw("Reading encoded pictures files and transforming them in vectors of doubles", file_output_results, 1, Unit::microsecs);
         for (const auto &file: std::filesystem::directory_iterator(path)) {
             //the if is only there to avoid to parse the ".gitkeep" file, more robust solutions would be preferable
             if (file.path().string().find(".gitkeep") == std::string::npos) {
@@ -250,7 +250,7 @@ void protocol_p(std::ofstream &file_output_results){
     seal::Plaintext sample_pt;
     {
         Stopwatch sw("Encoding of the sample as a plaintext",
-                     file_output_results, 1, Unit::microsecs);
+                     file_output_results, 1, Unit::millisecs);
         encoder.encode(sample, scale, sample_pt);
     }
     seal::Ciphertext sample_ct;
@@ -260,7 +260,7 @@ void protocol_p(std::ofstream &file_output_results){
     }
     //Save the ciphertext in a file
     {
-        Stopwatch sw("Serialisation of the sample", file_output_results, 1, Unit::microsecs);
+        Stopwatch sw("Serialisation of the sample", file_output_results, 1, Unit::millisecs);
         std::ofstream fs("../ciphertexts/sample.ct", std::ios::binary);
         sample_ct.save(fs);
     }
@@ -282,30 +282,32 @@ void protocol_p(std::ofstream &file_output_results){
                            evaluator, gal_keys, relin_keys, scale);
     }
 
-    seal::Plaintext enc_euclidean_dist_pt;
-    std::vector<double> euclidean_dist_dec;
-    {
-        Stopwatch sw(
-                "HE: Decryption of the euclidean distance (first part of the function f) between the template and the sample",
-                file_output_results, 1, Unit::microsecs);
-        decryptor.decrypt(euc_dist_ct, enc_euclidean_dist_pt);
-    }
-    {
-        Stopwatch sw(
-                "HE: Decoding of the euclidean distance (first part of the function f) between the template and the sample",
-                file_output_results, 1, Unit::microsecs);
-        encoder.decode(enc_euclidean_dist_pt, euclidean_dist_dec);
-    }
+    decrypt_decode_print(euc_dist_ct, encoder, decryptor, "The approximate euclidean distance is equal to:");
+
+//    seal::Plaintext enc_euclidean_dist_pt;
+//    std::vector<double> euclidean_dist_dec;
+//    {
+//        Stopwatch sw(
+//                "HE: Decryption of the euclidean distance (first part of the function f) between the template and the sample",
+//                file_output_results, 1, Unit::millisecs);
+//        decryptor.decrypt(euc_dist_ct, enc_euclidean_dist_pt);
+//    }
+//    {
+//        Stopwatch sw(
+//                "HE: Decoding of the euclidean distance (first part of the function f) between the template and the sample",
+//                file_output_results, 1, Unit::millisecs);
+//        encoder.decode(enc_euclidean_dist_pt, euclidean_dist_dec);
+//    }
 
 
     //    verification of the result
-    file_output_results
-            << "Verification if the ciphertext euclidean distance calculation is accurate."
-            << std::endl;
-    double euc_dist_true = euclidean_distance(templates[which_template], sample);
-    file_output_results << "The true result is " << euc_dist_true
-                        << " and the decrypted result is "
-                        << euclidean_dist_dec[0] << std::endl;
+//    file_output_results
+//            << "Verification if the ciphertext euclidean distance calculation is accurate."
+//            << std::endl;
+//    double euc_dist_true = euclidean_distance(templates[which_template], sample);
+//    file_output_results << "The true result is " << euc_dist_true
+//                        << " and the decrypted result is "
+//                        << euclidean_dist_dec[0] << std::endl;
 
     /*
      * Choice of a bound, and computation of the comparison between the euclidean distance and this bound
@@ -317,24 +319,37 @@ void protocol_p(std::ofstream &file_output_results){
      */
     std::vector<double> bound (dimension, 0.4); // this choice is based on the python library face_recognition
     seal::Plaintext bound_pt;
-    encoder.encode(bound, scale, bound_pt);
+    seal::Ciphertext bound_ct;
     {
-        Stopwatch sw("HE: Computation of the difference ",
-                     file_output_results, 1, Unit::microsecs);
-        evaluator.mod_switch_to_inplace(bound_pt, euc_dist_ct.parms_id());
-        euc_dist_ct.scale() = scale;
-        evaluator.sub_plain_inplace(euc_dist_ct, bound_pt);
+        Stopwatch sw("Encoding and encryption of the bound.",
+                     file_output_results, 1, Unit::millisecs);
+        encoder.encode(bound, scale, bound_pt);
+        encryptor.encrypt(bound_pt, bound_ct);
     }
+    {
+        Stopwatch sw("HE: Computation of the subtraction of the bound by the euclidean distance.",
+                     file_output_results, 1, Unit::millisecs);
+        evaluator.mod_switch_to_inplace(bound_ct, euc_dist_ct.parms_id());
+        euc_dist_ct.scale() = scale;
+        evaluator.sub_inplace( bound_ct, euc_dist_ct);
+    }
+    decrypt_decode_print(bound_ct, encoder, decryptor, "The approximate subtraction of the bound by euc dist is equal to:");
+
 
     //Based on the difference between the euclidean distance and the bound, we generate an approximation
     //of the comparison function
-    //we use, from the Asiacrypt 2020 paper, g4 and 2 compositions of f4
+    //we use, from the Asiacrypt 2020 paper, composition of g3 o f4 o f3
 
     seal::Ciphertext b_approx_ct, tmp_approx_ct;
-    enc_g3(euc_dist_ct, b_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
+    enc_g3(bound_ct, b_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
+    decrypt_decode_print(b_approx_ct, encoder, decryptor, "Approximation of b after g3:");
     enc_f4(b_approx_ct, tmp_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
+    decrypt_decode_print(tmp_approx_ct, encoder, decryptor, "Approximation of b after f4:");
     enc_f3(tmp_approx_ct, b_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
+    decrypt_decode_print(b_approx_ct, encoder, decryptor, "Approximation of b after f3:");
     enc_final_approx_inplace(b_approx_ct, encoder, decryptor, evaluator, scale);
+    decrypt_decode_print(b_approx_ct, encoder, decryptor, "The approximate b is equal to:");
+
 
     auto end_time_function_f = std::chrono::high_resolution_clock::now();
     auto duration_function_f = std::chrono::duration_cast<std::chrono::milliseconds>(end_time_function_f - start_time_function_f);
@@ -345,6 +360,8 @@ void protocol_p(std::ofstream &file_output_results){
     // Server generates the random number Tau
     double tau = abs(RandomDouble());
     file_output_results << "Tau est egale a " << tau << std::endl;
+    std::cout << "Tau est egale a " << tau << std::endl;
+
     // Needs to save tau as a file to sign it after. And normally also 0.0, but not done here
 
     // Server creates the plaintext for Tau
@@ -366,13 +383,16 @@ void protocol_p(std::ofstream &file_output_results){
     // Save the token y encrypted in a file to send it to client
     {
         std::ofstream fs("../ciphertexts/token.ct", std::ios::binary);
-        euc_dist_ct.save(fs);
+        b_approx_ct.save(fs);
     }
 
-    auto end_time_function_g = std::chrono::high_resolution_clock::now();
-    auto duration_function_g = std::chrono::duration_cast<std::chrono::microseconds>(end_time_function_g - start_time_function_g);
+    decrypt_decode_print(b_approx_ct, encoder, decryptor, "The approximate y = b * tau is equal to:");
 
-    file_output_results << "The function g has lasted " << duration_function_g.count() << " microseconds." << std::endl;
+
+    auto end_time_function_g = std::chrono::high_resolution_clock::now();
+    auto duration_function_g = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_function_g - start_time_function_g);
+
+    file_output_results << "The function g has lasted " << duration_function_g.count() << " milliseconds." << std::endl;
 
     auto start_time_signature_s = std::chrono::high_resolution_clock::now();
 
@@ -410,9 +430,9 @@ void protocol_p(std::ofstream &file_output_results){
     file_output_results << "Signature by the Server done." << std::endl;
 
     auto end_time_signature_s = std::chrono::high_resolution_clock::now();
-    auto duration_signature_s = std::chrono::duration_cast<std::chrono::microseconds>(end_time_signature_s - start_time_signature_s);
+    auto duration_signature_s = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_signature_s - start_time_signature_s);
 
-    file_output_results << "The signature by S has taken " << duration_signature_s.count() << " microseconds." << std::endl;
+    file_output_results << "The signature by S has taken " << duration_signature_s.count() << " milliseconds." << std::endl;
 
     //Server sends to Client the token and its signature
 
@@ -444,7 +464,7 @@ void protocol_p(std::ofstream &file_output_results){
     file_output_results << "Signature verified by the Client." << std::endl;
     auto end_time_verif_sig = std::chrono::high_resolution_clock::now();
     auto duration_verif_sig = std::chrono::duration_cast<std::chrono::microseconds>(end_time_verif_sig - start_time_verif_sig);
-    file_output_results << "The signature by S has taken " << duration_verif_sig.count() << " microseconds." << std::endl;
+    file_output_results << "The verification of the signature by S has taken " << duration_verif_sig.count() << " microseconds." << std::endl;
 
     seal::Plaintext token_pt;
     std::vector<double> token;
@@ -455,20 +475,36 @@ void protocol_p(std::ofstream &file_output_results){
         encoder.decode(token_pt, token);
     }
 
+
+    //To compare with the true result
+    double euc_dist_true = euclidean_distance(templates[which_template], sample);
+    double b = 0.0;
+    if (euc_dist_true < bound[0])
+        b = 1.0;
+    double token_true = b * tau;
+    file_output_results << "The token shall be about " << token_true << " and thus, the authentication shall ";
+    if (b == 0.0)
+        file_output_results << "fail." << std::endl;
+    else
+        file_output_results << "succeed." << std::endl;
+
+
+
     //Given it is an approximate calculus, we accepted the following error in the computation for the acceptance of the token
     double error_accepted = 0.001;
 
     if ((token[0] < (tau / 2.0)+error_accepted) && (token[0] > -error_accepted)) {
         file_output_results
-                << "The authentication was successful and the token "
-                << token[0] << " is usable to access to the desired service."
-                << std::endl;
-    } else {
-        file_output_results
                 << "The authentication was unsuccessful and the token "
                 << token[0]
                 << " is not usable to access to the desired service."
                 << std::endl;
+    } else {
+        file_output_results
+                << "The authentication was successful and the token "
+                << token[0] << " is usable to access to the desired service."
+                << std::endl;
+
     }
 
     auto end_time_comp = std::chrono::high_resolution_clock::now();
@@ -641,7 +677,7 @@ int main() {
     auto end_time_full = std::chrono::high_resolution_clock::now();
     auto duration_full = std::chrono::duration_cast<std::chrono::milliseconds >(
             end_time_full - start_time_full);
-    file_output_results << std::endl << std::endl << std::endl
+    file_output_results << std::endl
                         << "The full protocol has taken "
                         << duration_full.count()/1000.0 << " seconds."
                         << std::endl;

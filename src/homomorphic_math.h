@@ -65,6 +65,6 @@ void enc_g4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
             const seal::RelinKeys &relin_keys, const double scale);
 
 void decrypt_decode_print(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,
-                          seal::Decryptor &decryptor);
+                          seal::Decryptor &decryptor, std::string message);
 
 #endif //THREATS_SEAL_HOMOMORPHIC_MATH_H
