@@ -1,10 +1,6 @@
 import os
-import pickle
 import face_recognition
-import numpy as np
 import time
-import sys
-
 
 directory = 'pictures'
 

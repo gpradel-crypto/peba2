@@ -636,6 +636,8 @@ void protocol_p_for_accuracy(std::ofstream &file_output_results){
     auto duration_params = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_params - start_time_params);
     file_output_results << "Parameters and keys were set in " << duration_params.count()/1000.0 << " seconds." << std::endl;
 
+    auto start_time_enc_data = std::chrono::high_resolution_clock::now();
+
     std::string path = "../pict_arrays/";
     std::ifstream reader;
     std::vector<std::vector<double>> templates;
@@ -680,9 +682,13 @@ void protocol_p_for_accuracy(std::ofstream &file_output_results){
         }
     }
 
+    auto end_time_enc_data = std::chrono::high_resolution_clock::now();
+    auto duration_enc_data = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_enc_data - start_time_enc_data);
+    file_output_results << "The database of encoded pictures was encrypted in " << duration_enc_data.count()/1000.0 << " seconds." << std::endl;
 
+    auto start_time_P_execution = std::chrono::high_resolution_clock::now();
     file_output_results << std::endl <<"  ----------- Computation phase --------------" << std::endl;
-    int nb_trials = 100;
+    int nb_trials = 1000;
     int result_accuracy = 0; // for the accuracy
     file_output_results << "The protocol P will be executed " << nb_trials << " times." <<  std::endl;
     for (int i = 0; i < nb_trials; ++i) {
@@ -770,7 +776,10 @@ void protocol_p_for_accuracy(std::ofstream &file_output_results){
             result_accuracy += 1;
     }
     file_output_results << std::endl << "Over " << nb_trials << " executions of P, " << result_accuracy << " were successful." << std::endl;
-    file_output_results << "The accuracy is thus of " << ((1.0*result_accuracy)/nb_trials)*100.0 << "%" <<  std::endl;
+    file_output_results << "The accuracy is thus of " << ((1.0*result_accuracy)/nb_trials)*100.0 << "%." <<  std::endl;
+    auto end_time_P_execution = std::chrono::high_resolution_clock::now();
+    auto duration_P_execution = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_P_execution - start_time_P_execution);
+    file_output_results << "All the executions of P were executed in " << duration_P_execution.count()/1000.0 << " seconds." << std::endl;
 }
 
 
