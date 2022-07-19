@@ -1,7 +1,3 @@
-//
-// Created by gpr on 16/03/2022.
-//
-
 #ifndef THREATS_SEAL_PLAIN_MATH_H
 #define THREATS_SEAL_PLAIN_MATH_H
 

@@ -1,7 +1,3 @@
-//
-// Created by gpradel on 7/5/2022.
-//
-
 #include "homomorphic_math.h"
 
 
@@ -24,7 +20,7 @@ enc_manhattan_dist(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2,
 }
 
 /*
- * Computation of the euclidean distance between two ciphertexts ct1 and ct2. The square root at the end is not computed.
+ * Computation of the (square) euclidean distance between two ciphertexts ct1 and ct2. The square root at the end is not computed.
  * The result is put in ctdest.
  */
 void
@@ -68,8 +64,6 @@ void enc_f1(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
             const seal::RelinKeys &relin_keys, const double scale) {
     double a3 = -1.0 / 2.0;
     double a1 = 3.0 / 2.0;
-//    std::cout << "ct_x egale a " << std::endl;
-//    decrypt_decode_print(ct_x, encoder, decryptor);
     seal::Plaintext a3_pt, a1_pt;
     encoder.encode(a1, scale, a1_pt);
     encoder.encode(a3, scale, a3_pt);
@@ -97,9 +91,6 @@ void enc_f1(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     evaluator.mod_switch_to_inplace(ct_x, ct_x3.parms_id());
     ct_x.scale() = ct_x3.scale();
     evaluator.add(ct_x3, ct_x, ctdest);
-
-//    std::cout << "ct_dest  egale a " << std::endl;
-//    decrypt_decode_print(ctdest, encoder, decryptor);
 }
 
 void enc_f2(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
@@ -109,8 +100,6 @@ void enc_f2(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     double a5 = 3.0/8.0;
     double a3 = -10.0 / 8.0;
     double a1 = 15.0 / 8.0;
-//    std::cout << "ct_x egale a " << std::endl;
-//    decrypt_decode_print(ct_x, encoder, decryptor);
     seal::Plaintext a5_pt, a3_pt, a1_pt;
     encoder.encode(a1, scale, a1_pt);
     encoder.encode(a3, scale, a3_pt);
@@ -152,8 +141,6 @@ void enc_f2(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     ct_x3.scale() = ct_x5.scale();
     evaluator.add(ct_x3, ct_x, ctdest);
     evaluator.add_inplace(ctdest, ct_x5);
-//    std::cout << "ct_dest  egale a " << std::endl;
-//    decrypt_decode_print(ctdest, encoder, decryptor);
 }
 
 void enc_f3(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
@@ -164,8 +151,6 @@ void enc_f3(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     double a5 = 21.0 / 16.0;
     double a3 = -35.0 / 16.0;
     double a1 = 35.0 / 16.0;
-//    std::cout << "ct_x egale a " << std::endl;
-//    decrypt_decode_print(ct_x, encoder, decryptor);
     seal::Plaintext a7_pt, a5_pt, a3_pt, a1_pt;
     encoder.encode(a1, scale, a1_pt);
     encoder.encode(a3, scale, a3_pt);
@@ -222,8 +207,6 @@ void enc_f3(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     evaluator.add(ct_x3, ct_x, ctdest);
     evaluator.add_inplace(ctdest, ct_x5);
     evaluator.add_inplace(ctdest, ct_x7);
-//    std::cout << "ct_dest  egale a " << std::endl;
-//    decrypt_decode_print(ctdest, encoder, decryptor);
 }
 
 void enc_f4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
@@ -235,15 +218,12 @@ void enc_f4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     double a5 = 378.0 / 128.0;
     double a3 = -420.0 / 128.0;
     double a1 = 315.0 / 128.0;
-//    std::cout << "ct_x egale a " << std::endl;
-//    decrypt_decode_print(ct_x, encoder, decryptor);
     seal::Plaintext a9_pt, a7_pt, a5_pt, a3_pt, a1_pt;
     encoder.encode(a1, scale, a1_pt);
     encoder.encode(a3, scale, a3_pt);
     encoder.encode(a5, scale, a5_pt);
     encoder.encode(a7, scale, a7_pt);
     encoder.encode(a9, scale, a9_pt);
-
 
     seal::Ciphertext ct_x2;
     evaluator.square(ct_x, ct_x2);
@@ -307,8 +287,6 @@ void enc_f4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     evaluator.add_inplace(ctdest, ct_x5);
     evaluator.add_inplace(ctdest, ct_x7);
     evaluator.add_inplace(ctdest, ct_x9);
-//    std::cout << "ct_dest  egale a " << std::endl;
-//    decrypt_decode_print(ctdest, encoder, decryptor);
 }
 
 void enc_g1(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
@@ -317,8 +295,6 @@ void enc_g1(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
             const seal::RelinKeys &relin_keys, const double scale) {
     double a3 = -1359.0 / pow(2.0, 10);
     double a1 = 2126.0 / pow(2.0,10);
-    //    std::cout << "ct_x egale a " << std::endl;
-//    decrypt_decode_print(ct_x, encoder, decryptor);
     seal::Plaintext a3_pt, a1_pt;
     encoder.encode(a1, scale, a1_pt);
     encoder.encode(a3, scale, a3_pt);
@@ -346,9 +322,6 @@ void enc_g1(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     evaluator.mod_switch_to_inplace(ct_x, ct_x3.parms_id());
     ct_x.scale() = ct_x3.scale();
     evaluator.add(ct_x3, ct_x, ctdest);
-
-//    std::cout << "ct_dest  egale a " << std::endl;
-//    decrypt_decode_print(ctdest, encoder, decryptor);
 }
 
 void enc_g2(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
@@ -358,8 +331,6 @@ void enc_g2(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     double a5 = 3796.0/ pow(2.0,10);
     double a3 = -6108.0 / pow(2.0,10);
     double a1 = 3334.0 / pow(2.0,10);
-//    std::cout << "ct_x egale a " << std::endl;
-//    decrypt_decode_print(ct_x, encoder, decryptor);
     seal::Plaintext a5_pt, a3_pt, a1_pt;
     encoder.encode(a1, scale, a1_pt);
     encoder.encode(a3, scale, a3_pt);
@@ -401,8 +372,6 @@ void enc_g2(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     ct_x3.scale() = ct_x5.scale();
     evaluator.add(ct_x3, ct_x, ctdest);
     evaluator.add_inplace(ctdest, ct_x5);
-//    std::cout << "ct_dest  egale a " << std::endl;
-//    decrypt_decode_print(ctdest, encoder, decryptor);
 }
 
 void enc_g3(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
@@ -413,8 +382,6 @@ void enc_g3(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     double a5 = 25614.0 / pow(2.0, 10);
     double a3 = -16577.0 / pow(2.0, 10);
     double a1 = 4589.0 / pow(2.0, 10);
-//    std::cout << "ct_x egale a " << std::endl;
-//    decrypt_decode_print(ct_x, encoder, decryptor);
     seal::Plaintext a7_pt, a5_pt, a3_pt, a1_pt;
     encoder.encode(a1, scale, a1_pt);
     encoder.encode(a3, scale, a3_pt);
@@ -471,8 +438,6 @@ void enc_g3(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     evaluator.add(ct_x3, ct_x, ctdest);
     evaluator.add_inplace(ctdest, ct_x5);
     evaluator.add_inplace(ctdest, ct_x7);
-//    std::cout << "ct_dest  egale a " << std::endl;
-//    decrypt_decode_print(ctdest, encoder, decryptor);
 }
 
 void enc_g4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
@@ -484,8 +449,6 @@ void enc_g4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     double a5 = 97015.0 / pow(2.0, 10);
     double a3 = -34974.0 / pow(2.0, 10);
     double a1 = 5850.0 / pow(2.0, 10);
-//    std::cout << "ct_x egale a " << std::endl;
-//    decrypt_decode_print(ct_x, encoder, decryptor);
     seal::Plaintext a9_pt, a7_pt, a5_pt, a3_pt, a1_pt;
     encoder.encode(a1, scale, a1_pt);
     encoder.encode(a3, scale, a3_pt);
@@ -556,8 +519,6 @@ void enc_g4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
     evaluator.add_inplace(ctdest, ct_x5);
     evaluator.add_inplace(ctdest, ct_x7);
     evaluator.add_inplace(ctdest, ct_x9);
-//    std::cout << "ct_dest  egale a " << std::endl;
-//    decrypt_decode_print(ctdest, encoder, decryptor);
 }
 
 void decrypt_decode_print(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,

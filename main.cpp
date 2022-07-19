@@ -284,31 +284,6 @@ void protocol_p(std::ofstream &file_output_results){
 
     decrypt_decode_print(euc_dist_ct, encoder, decryptor, "The approximate euclidean distance is equal to:");
 
-//    seal::Plaintext enc_euclidean_dist_pt;
-//    std::vector<double> euclidean_dist_dec;
-//    {
-//        Stopwatch sw(
-//                "HE: Decryption of the euclidean distance (first part of the function f) between the template and the sample",
-//                file_output_results, 1, Unit::millisecs);
-//        decryptor.decrypt(euc_dist_ct, enc_euclidean_dist_pt);
-//    }
-//    {
-//        Stopwatch sw(
-//                "HE: Decoding of the euclidean distance (first part of the function f) between the template and the sample",
-//                file_output_results, 1, Unit::millisecs);
-//        encoder.decode(enc_euclidean_dist_pt, euclidean_dist_dec);
-//    }
-
-
-    //    verification of the result
-//    file_output_results
-//            << "Verification if the ciphertext euclidean distance calculation is accurate."
-//            << std::endl;
-//    double euc_dist_true = euclidean_distance(templates[which_template], sample);
-//    file_output_results << "The true result is " << euc_dist_true
-//                        << " and the decrypted result is "
-//                        << euclidean_dist_dec[0] << std::endl;
-
     /*
      * Choice of a bound, and computation of the comparison between the euclidean distance and this bound
      * We use the technique from Cheon et al. in "Efficient Homomorphic Comparison Methods with Optimal Complexity"
@@ -345,13 +320,9 @@ void protocol_p(std::ofstream &file_output_results){
 
     seal::Ciphertext b_approx_ct, tmp_approx_ct;
     enc_g3(bound_ct, b_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
-    decrypt_decode_print(b_approx_ct, encoder, decryptor, "Approximation of b after g3:");
     enc_f4(b_approx_ct, tmp_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
-    decrypt_decode_print(tmp_approx_ct, encoder, decryptor, "Approximation of b after f4:");
     enc_f3(tmp_approx_ct, b_approx_ct, encoder, decryptor, evaluator, relin_keys, scale);
-    decrypt_decode_print(b_approx_ct, encoder, decryptor, "Approximation of b after f3:");
     enc_final_approx_inplace(b_approx_ct, encoder, decryptor, evaluator, scale);
-    decrypt_decode_print(b_approx_ct, encoder, decryptor, "The approximate b is equal to:");
 
 
     auto end_time_function_f = std::chrono::high_resolution_clock::now();
@@ -362,10 +333,6 @@ void protocol_p(std::ofstream &file_output_results){
     auto start_time_function_g = std::chrono::high_resolution_clock::now();
     // Server generates the random number Tau
     double tau = abs(RandomDouble());
-    file_output_results << "Tau est egale a " << tau << std::endl;
-    std::cout << "Tau est egale a " << tau << std::endl;
-
-    // Needs to save tau as a file to sign it after. And normally also 0.0, but not done here
 
     // Server creates the plaintext for Tau
     seal::Plaintext tau_pt;
@@ -388,9 +355,6 @@ void protocol_p(std::ofstream &file_output_results){
         std::ofstream fs("../ciphertexts/token.ct", std::ios::binary);
         b_approx_ct.save(fs);
     }
-
-    decrypt_decode_print(b_approx_ct, encoder, decryptor, "The approximate y = b * tau is equal to:");
-
 
     auto end_time_function_g = std::chrono::high_resolution_clock::now();
     auto duration_function_g = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_function_g - start_time_function_g);
@@ -440,7 +404,6 @@ void protocol_p(std::ofstream &file_output_results){
     //Server sends to Client the token and its signature
 
     auto start_time_verif_sig = std::chrono::high_resolution_clock::now();
-
 
     //Client receives them, verifies the signature and decrypts the token
     //Verification of the signature, if wrong then quit
@@ -751,10 +714,8 @@ void protocol_p_for_accuracy(std::ofstream &file_output_results){
         else
             file_output_results << "fail." << std::endl;
 
-
-
-        //Given it is an approximate calculus, we accepted the following error in the computation for the acceptance of the token
         bool he_P = false;
+        //Given it is an approximate calculus, we accepted the following error in the computation for the acceptance of the token
         double error_accepted = 0.001;
 
         if ((token[0] < (tau / 2.0) + error_accepted) && (token[0] > -error_accepted)) {
@@ -784,7 +745,6 @@ void protocol_p_for_accuracy(std::ofstream &file_output_results){
 
 
 void test_approx_function(){
-
     //Creation of the homomorphic keys
     // Seal encryption set up
     seal::EncryptionParameters parms(seal::scheme_type::ckks);
@@ -872,24 +832,24 @@ void test_approx_function(){
     double b = 0.4;
 
     double approx = a - b;
-    std::cout << "a - b est egale à " << approx << std::endl;
+    std::cout << "a - b is equal to " << approx << std::endl;
     double tmp_res;
     int loop_g = 1;
     int loop_f = 2;
     for (int i = 0; i < loop_g; ++i) {
         tmp_res = g4(approx);
         approx = tmp_res;
-        std::cout << "La valeur approx est egale a " << approx << " après "
-        << i+1 << " application de g4" << std::endl;
+        std::cout << "The approximate value is equal to " << approx << " after "
+        << i+1 << " the application of g4." << std::endl;
     }
     for (int i = 0; i < loop_f; ++i) {
         tmp_res = f4(approx);
         approx = tmp_res;
-        std::cout << "La valeur approx est egale a " << approx << " après "
-                  << i+1 << " application de f4" << std::endl;
+        std::cout << "The approximate value is equal to " << approx << " after "
+                  << i+1 << " the application of f4." << std::endl;
     }
     final_approx_inplace(approx);
-    std::cout << "La valeur recherchée après la derniere operation est egale a "
+    std::cout << "The final approximate value we are looking for is "
     << approx << std::endl;
 
     seal::Plaintext approx_pt;
@@ -907,10 +867,7 @@ void test_approx_function(){
     PrintVectorUntilN(tmp_dec, 10);
 
     for (int i = 0; i < 3; ++i) {
-        std::cout << "il reste " << approx_result_ct.coeff_modulus_size() << " de multiplicative "
-                                                         "depth" <<
-        std::endl;
-        std::cout << " c'est la " << i + 1 << " application de g4" << std::endl;
+        std::cout << approx_result_ct.coeff_modulus_size() << " of multiplicative depth is left." << std::endl;
         std::ifstream is;
         is.open("../ciphertexts/approx_result.ct", std::ios::binary);
         seal::Ciphertext tmp_approx;
@@ -933,27 +890,27 @@ void test_approx_function(){
 
 int main() {
 
-//    //Time of the full suite of tests
-//    auto start_time_full = std::chrono::high_resolution_clock::now();
-//
-//    //File in which the results of the protocol p will be written
-//    std::ofstream file_output_results("../results.data");
-//
-//    protocol_p(file_output_results);
-//
-//    auto end_time_full = std::chrono::high_resolution_clock::now();
-//    auto duration_full = std::chrono::duration_cast<std::chrono::milliseconds >(
-//            end_time_full - start_time_full);
-//    file_output_results << std::endl
-//                        << "The full protocol has taken "
-//                        << duration_full.count()/1000.0 << " seconds."
-//                        << std::endl;
-//
-//
-//    file_output_results.close();
-//    std::ifstream file_output_results_display;
-//    file_output_results_display.open("../results.data");
-//    PrintFile(file_output_results_display);
+    //Time of the full suite of tests
+    auto start_time_full = std::chrono::high_resolution_clock::now();
+
+    //File in which the results of the protocol p will be written
+    std::ofstream file_output_results("../results.data");
+
+    protocol_p(file_output_results);
+
+    auto end_time_full = std::chrono::high_resolution_clock::now();
+    auto duration_full = std::chrono::duration_cast<std::chrono::milliseconds >(
+            end_time_full - start_time_full);
+    file_output_results << std::endl
+                        << "The full protocol has taken "
+                        << duration_full.count()/1000.0 << " seconds."
+                        << std::endl;
+
+
+    file_output_results.close();
+    std::ifstream file_output_results_display;
+    file_output_results_display.open("../results.data");
+    PrintFile(file_output_results_display);
 
     //File in which the results of the accuracy of the protocol p will be written
     std::ofstream file_accuracy("../results_accuracy.data");

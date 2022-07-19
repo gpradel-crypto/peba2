@@ -1,7 +1,3 @@
-//
-// Created by gpr on 16/03/2022.
-//
-
 #include <random>
 #include <seal/seal.h>
 #include <fstream>

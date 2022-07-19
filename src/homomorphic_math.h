@@ -1,7 +1,3 @@
-//
-// Created by gpradel on 7/5/2022.
-//
-
 #ifndef THREATS_SEAL_HOMOMORPHIC_MATH_H
 #define THREATS_SEAL_HOMOMORPHIC_MATH_H
 

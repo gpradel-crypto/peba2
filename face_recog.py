@@ -8,21 +8,26 @@ directory = 'pictures'
 start_time = time.time()
 start_cpu_time = time.process_time()
 
-cnt=0
+cnt = 0
+fail = 0
 
 
 for filename in os.listdir(directory):
-    # print(filename)
+    print(filename)
     if (filename == '.gitkeep'):
         # print('I got out of the loop')
         continue
     f = os.path.join(directory, filename)
     # checking if it is a file
     if os.path.isfile(f):
-        cnt += 1
         image = face_recognition.load_image_file(f)
         list_of_face_encodings = face_recognition.face_encodings(image)
         # encoding = np.array(list_of_face_encodings[0].tolist())
+        if (len(list_of_face_encodings)==0):
+            fail += 1
+            continue
+        cnt += 1
+        print(f'{cnt} pictures were encoded.')
         encoding = list(list_of_face_encodings[0])
         # encoding.tolist()
         # format_encoding = ["{},".format(i) for i in encoding]
@@ -51,6 +56,7 @@ elapsed_cpu_time = end_cpu_time - start_cpu_time
 with open('results_python.data', 'w') as f:
     print('Initialisation of the database of pictures.', file=f)
     print(f'{cnt} pictures were encoded.', file=f)
+    print(f'{fail} pictures failed to be encoded.', file=f)
     print('Execution clock time: ', elapsed_time, ' seconds', file=f)
     print('Execution CPU time: ', elapsed_cpu_time, ' seconds', file=f)
 
