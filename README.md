@@ -25,6 +25,9 @@ On top of Microsoft SEAL dependencies, the following ones are required.
 sudo apt install libssl-dev 
 ```
 
+To test our code, we used the Large-scale CelebFaces Attributes ([CelebA](https://drive.google.com/drive/folders/0B7EVK8r0v71pWEZsZE9oNnFzTm8?resourcekey=0-5BR16BdXnb8hVj6CNHKzLg)) Dataset By Multimedia Lab, The Chinese University of Hong Kong [4].
+
+
 ## References
 
 [1] Jung Hee Cheon, Andrey Kim, Miran Kim and Yongsoo Song, *Homomorphic Encryption for Arithmetic of Approximate Numbers*, 2016, Cryptology ePrint Archive, Paper 2016/421, https://eprint.iacr.org/2016/421
@@ -32,3 +35,5 @@ sudo apt install libssl-dev
 [2] Microsoft SEAL release 4.0, https://github.com/Microsoft/SEAL, 2022
 
 [3] https://github.com/ageitgey/face_recognition
+
+[4] Ziwei Liu, Ping Luo, Xiaogang Wang, and Xiaoou Tang, *Deep Learning Face Attributes in the Wild*, 2015, Proceedings of International Conference on Computer Vision (ICCV)
