@@ -1,4 +1,4 @@
-# threats-seal
+# peba-seal
 
 The PEBA protocol is a privacy-preserving authentication protocol based on biometrics and homomorphic encryption (HE).
 
