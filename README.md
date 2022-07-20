@@ -20,7 +20,7 @@ The face_recognition library [3] is used for the faces encoding.
 pip3 install face_recognition
 ```
 #### apt
-On top of Microsoft SEAL dependencies, the following are required.
+On top of Microsoft SEAL dependencies, the following ones are required.
 ```
 sudo apt install libssl-dev 
 ```
