@@ -1,8 +1,9 @@
 # peba-seal
 
 The PEBA protocol is a privacy-preserving authentication protocol based on biometrics and homomorphic encryption (HE).
+PEBA is [Apache licensed](https://github.com/lab-incert/peba-seal/blob/main/LICENSE) and has been developed by Gaëtan Pradel, member of the R&D Department of [INCERT](https://www.incert.lu/), based in Luxembourg and PhD Candidate at the Information Security Group in Royal Holloway, University of London under the supervision of [Prof. Chris Mitchell](https://www.chrismitchell.net/).
 
-In PEBA, the HE scheme used is CKKS [1], as implemented by Microsoft in their open-source library Microsoft SEAL [2].
+In PEBA, the HE scheme used is CKKS [1] as implemented by Microsoft in their open-source library Microsoft SEAL [2].
 
 ## Dependencies
 
@@ -23,8 +24,6 @@ On top of Microsoft SEAL dependencies, the following are required.
 ```
 sudo apt install libssl-dev 
 ```
-
-
 
 ## References
 
