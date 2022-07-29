@@ -141,7 +141,9 @@ void protocol_p(std::ofstream &file_output_results){
     auto duration_params = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_params - start_time_params);
     file_output_results << "Parameters and keys were set in " << duration_params.count()/1000.0 << " seconds." << std::endl;
 
-    std::string path = "../pict_arrays/";
+//    std::string path = "../pict_arrays/";
+    std::string path = "../celeba_encoded/encoding/"; // for the celeba dataset
+
     std::ifstream reader;
     std::vector<std::vector<double>> templates;
     {
@@ -160,7 +162,7 @@ void protocol_p(std::ofstream &file_output_results){
     std::vector<seal::Plaintext> templates_pt;
     {
         Stopwatch sw("Encoding of the templates as plaintexts",
-                     file_output_results, 1, Unit::millisecs);
+                     file_output_results, 1, Unit::secs);
         seal::Plaintext temp_pt;
         for (int i = 0; i < templates.size(); ++i) {
             encoder.encode(templates[i], scale, temp_pt);
@@ -170,7 +172,7 @@ void protocol_p(std::ofstream &file_output_results){
     std::vector<seal::Ciphertext> templates_ct;
     {
         Stopwatch sw("Encryption of the templates", file_output_results,
-                     templates_pt.size(), Unit::millisecs);
+                     1, Unit::secs);
         seal::Ciphertext temp_ct;
         for (int i = 0; i < templates_pt.size(); ++i) {
             encryptor.encrypt(templates_pt[i], temp_ct);
@@ -602,6 +604,7 @@ void protocol_p_for_accuracy(std::ofstream &file_output_results){
     auto start_time_enc_data = std::chrono::high_resolution_clock::now();
 
     std::string path = "../pict_arrays/";
+//    std::string path = "../celeba_encoded/encoding/"; // for the celeba dataset
     std::ifstream reader;
     std::vector<std::vector<double>> templates;
     std::vector<std::string> mapping_index_file_name;
@@ -627,7 +630,7 @@ void protocol_p_for_accuracy(std::ofstream &file_output_results){
     std::vector<seal::Plaintext> templates_pt;
     {
         Stopwatch sw("Encoding of the templates as plaintexts",
-                     file_output_results, 1, Unit::millisecs);
+                     file_output_results, 1, Unit::secs);
         seal::Plaintext temp_pt;
         for (int i = 0; i < templates.size(); ++i) {
             encoder.encode(templates[i], scale, temp_pt);
@@ -637,7 +640,7 @@ void protocol_p_for_accuracy(std::ofstream &file_output_results){
     std::vector<seal::Ciphertext> templates_ct;
     {
         Stopwatch sw("Encryption of the templates", file_output_results,
-                     templates_pt.size(), Unit::millisecs);
+                     1, Unit::secs);
         seal::Ciphertext temp_ct;
         for (int i = 0; i < templates_pt.size(); ++i) {
             encryptor.encrypt(templates_pt[i], temp_ct);
@@ -913,9 +916,9 @@ int main() {
     PrintFile(file_output_results_display);
 
     //File in which the results of the accuracy of the protocol p will be written
-    std::ofstream file_accuracy("../results_accuracy.data");
-    protocol_p_for_accuracy(file_accuracy);
-    file_accuracy.close();
+//    std::ofstream file_accuracy("../results_accuracy.data");
+//    protocol_p_for_accuracy(file_accuracy);
+//    file_accuracy.close();
 
     return EXIT_SUCCESS;
 }
