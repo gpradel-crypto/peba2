@@ -141,8 +141,8 @@ void protocol_p(std::ofstream &file_output_results){
     auto duration_params = std::chrono::duration_cast<std::chrono::milliseconds >(end_time_params - start_time_params);
     file_output_results << "Parameters and keys were set in " << duration_params.count()/1000.0 << " seconds." << std::endl;
 
-//    std::string path = "../pict_arrays/";
-    std::string path = "../celeba_encoded/encoding/"; // for the celeba dataset
+    std::string path = "../pict_arrays/";
+//    std::string path = "../celeba_encoded/encoding/"; // for the celeba dataset
 
     std::ifstream reader;
     std::vector<std::vector<double>> templates;
@@ -159,39 +159,40 @@ void protocol_p(std::ofstream &file_output_results){
     }
 
     // Encryption of the template
-    std::vector<seal::Plaintext> templates_pt;
     {
-        Stopwatch sw("Encoding of the templates as plaintexts",
-                     file_output_results, 1, Unit::secs);
-        seal::Plaintext temp_pt;
-        for (int i = 0; i < templates.size(); ++i) {
-            encoder.encode(templates[i], scale, temp_pt);
-            templates_pt.push_back(temp_pt);
+        std::vector<seal::Plaintext> templates_pt;
+        {
+            Stopwatch sw("Encoding of the templates as plaintexts",
+                         file_output_results, 1, Unit::secs);
+            seal::Plaintext temp_pt;
+            for (int i = 0; i < templates.size(); ++i) {
+                encoder.encode(templates[i], scale, temp_pt);
+                templates_pt.push_back(temp_pt);
+            }
+        }
+        std::vector<seal::Ciphertext> templates_ct;
+        {
+            Stopwatch sw("Encryption of the templates", file_output_results,
+                         1, Unit::secs);
+            seal::Ciphertext temp_ct;
+            for (int i = 0; i < templates_pt.size(); ++i) {
+                encryptor.encrypt(templates_pt[i], temp_ct);
+                templates_ct.push_back(temp_ct);
+            }
+        }
+        //Save the ciphertext in a file
+        {
+            Stopwatch sw("Serialisation of the encrypted templates",
+                         file_output_results, templates_pt.size(), Unit::millisecs);
+            for (int i = 0; i < templates_ct.size(); ++i) {
+                std::string file_name_ct = "../ciphertexts/template";
+                file_name_ct.append(std::to_string(i + 1));
+                file_name_ct.append(".ct");
+                std::ofstream fs(file_name_ct, std::ios::binary);
+                templates_ct[i].save(fs);
+            }
         }
     }
-    std::vector<seal::Ciphertext> templates_ct;
-    {
-        Stopwatch sw("Encryption of the templates", file_output_results,
-                     1, Unit::secs);
-        seal::Ciphertext temp_ct;
-        for (int i = 0; i < templates_pt.size(); ++i) {
-            encryptor.encrypt(templates_pt[i], temp_ct);
-            templates_ct.push_back(temp_ct);
-        }
-    }
-    //Save the ciphertext in a file
-    {
-        Stopwatch sw("Serialisation of the encrypted templates",
-                     file_output_results, templates_pt.size(), Unit::millisecs);
-        for (int i = 0; i < templates_ct.size(); ++i) {
-            std::string file_name_ct = "../ciphertexts/template";
-            file_name_ct.append(std::to_string(i + 1));
-            file_name_ct.append(".ct");
-            std::ofstream fs(file_name_ct, std::ios::binary);
-            templates_ct[i].save(fs);
-        }
-    }
-
     // Server side
     // Create of the signature key of the server
     EVP_PKEY *sig_key_server = NULL;
@@ -271,16 +272,32 @@ void protocol_p(std::ofstream &file_output_results){
 
     //Server side
 
+    //loading of the template to compare with the sample
+    int which_template = 1;
+    seal::Ciphertext template_to_compare;
+    std::string file_name_template_to_compare = "../ciphertexts/template";
+    file_name_template_to_compare.append(std::to_string(which_template));
+    file_name_template_to_compare.append(".ct");
+    std::ifstream fitl(file_name_template_to_compare, std::ios::binary);
+    if (fitl)
+    {
+        std::stringstream buffer;
+        buffer << fitl.rdbuf();
+        fitl.close();
+        template_to_compare.load(context, buffer);
+    }
+
+
     // To measure the time of the f function
-    int which_template = 0;
     auto start_time_function_f = std::chrono::high_resolution_clock::now();
+
 
     seal::Ciphertext euc_dist_ct;
     {
         Stopwatch sw(
                 "HE: Computation of the euclidean distance (first part of the function f) between the template and the sample",
                 file_output_results, 1, Unit::secs);
-        enc_euclidean_dist(templates_ct[which_template], sample_ct, euc_dist_ct, encoder,
+        enc_euclidean_dist(template_to_compare, sample_ct, euc_dist_ct, encoder,
                            evaluator, gal_keys, relin_keys, scale);
     }
 
