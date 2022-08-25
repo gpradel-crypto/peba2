@@ -273,20 +273,21 @@ void protocol_p(std::ofstream &file_output_results){
     //Server side
 
     //loading of the template to compare with the sample
-    int which_template = 1;
     seal::Ciphertext template_to_compare;
-    std::string file_name_template_to_compare = "../ciphertexts/template";
-    file_name_template_to_compare.append(std::to_string(which_template));
-    file_name_template_to_compare.append(".ct");
-    std::ifstream fitl(file_name_template_to_compare, std::ios::binary);
-    if (fitl)
+    int which_template = 1;
     {
-        std::stringstream buffer;
-        buffer << fitl.rdbuf();
-        fitl.close();
-        template_to_compare.load(context, buffer);
+        Stopwatch sw("Loading of the encrypted template", file_output_results, 1, Unit::millisecs);
+        std::string file_name_template_to_compare = "../ciphertexts/template";
+        file_name_template_to_compare.append(std::to_string(which_template));
+        file_name_template_to_compare.append(".ct");
+        std::ifstream fitl(file_name_template_to_compare, std::ios::binary);
+        if (fitl) {
+            std::stringstream buffer;
+            buffer << fitl.rdbuf();
+            fitl.close();
+            template_to_compare.load(context, buffer);
+        }
     }
-
 
     // To measure the time of the f function
     auto start_time_function_f = std::chrono::high_resolution_clock::now();
