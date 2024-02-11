@@ -16,7 +16,33 @@ void PrintVector(std::vector<double> vect) {
     std::cout << std::endl << std::endl;
 }
 
+void PrintVectorInt(std::vector<int64_t> vect) {
+    if (vect.empty()) {
+        perror("Vector empty for print in stdout");
+        abort();
+    }
+    std::cout << "[ ";
+    for (int i = 0; i < vect.size()-1; i++) {
+        std::cout << vect[i] << ", ";
+    }
+    std::cout << vect[vect.size()-1] << " ]";
+    std::cout << std::endl << std::endl;
+}
+
 void PrintVectorUntilN(std::vector<double> vect, int n) {
+    if (vect.empty()) {
+        perror("Vector empty for print in stdout");
+        abort();
+    }
+    std::cout << "[ ";
+    for (int i = 0; i < n; i++) {
+        std::cout << vect[i] << ", ";
+    }
+    std::cout << vect[n] << " ]";
+    std::cout << std::endl << std::endl;
+}
+
+void PrintVectorIntUntilN(std::vector<int64_t> vect, int n) {
     if (vect.empty()) {
         perror("Vector empty for print in stdout");
         abort();
@@ -43,6 +69,27 @@ void PrintVectorFile(std::vector<double> vect, std::ofstream& file_name) {
 }
 
 void PrintVector2(std::vector<std::vector<double>> vect) {
+    if (vect.empty()) {
+        perror("Vector of vectors empty for print in stdout");
+        abort();
+    }
+    for (int i = 0; i < vect.size(); ++i) {
+        if (vect[i].empty()){
+            perror("One of the vectors in the vector of vectors empty for print in stdout");
+            abort();
+        }
+    }
+    for (int i = 0; i < vect.size(); i++) {
+        std::cout << "[ ";
+        for (int j = 0; j < vect[i].size()-1; ++j) {
+            std::cout << vect[i][j] << ", ";
+        }
+        std::cout << vect[i][vect[i].size()-1] << " ]" << std::endl;
+    }
+    std::cout << std::endl << std::endl;
+}
+
+void PrintVector2Int(std::vector<std::vector<uint64_t>> vect) {
     if (vect.empty()) {
         perror("Vector of vectors empty for print in stdout");
         abort();
@@ -129,7 +176,7 @@ void PrintVector2FileUntilN(std::vector<std::vector<double>> vect, std::ofstream
 /*
 Helper function: Prints the parameters in a SEALContext.
 */
-void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale)
+void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale, uint64_t rescaling_factor)
 {
     auto &context_data = *context.key_context_data();
 
@@ -167,9 +214,12 @@ void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_n
     }
     file_name << coeff_modulus.back().bit_count();
     file_name << ") bits" << std::endl;
-    seal::CKKSEncoder encoder(context);
-    size_t slot_count = encoder.slot_count();
-    file_name << "|   Number of slots (dimension of vectors): " << slot_count << std::endl;
+    if (context_data.parms().scheme() == seal::scheme_type::ckks) {
+        seal::CKKSEncoder encoder(context);
+        size_t slot_count = encoder.slot_count();
+        file_name << "|   Number of slots (dimension of vectors): " << slot_count << std::endl;
+        file_name << "|    Scale: 2^" << power_of_scale << std::endl;
+    }
 
     /*
     For the BFV scheme print the plain_modulus parameter.
@@ -177,13 +227,14 @@ void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_n
     if (context_data.parms().scheme() == seal::scheme_type::bfv)
     {
         file_name << "|   plain_modulus: " << context_data.parms().plain_modulus().value() << std::endl;
+        seal::BatchEncoder encoder(context);
+        size_t slot_count = encoder.slot_count();
+        file_name << "|   Number of slots (dimension of vectors): " << slot_count << std::endl;
+        file_name << "|   Rescaling factor: " << rescaling_factor << std::endl;
     }
 
-    file_name << "|    Scale: 2^" << power_of_scale << std::endl;
-    file_name << "|    Number of rescaling allowed: " << coeff_modulus_size
-                        << std::endl;
+    file_name << "|    Number of rescaling allowed: " << coeff_modulus_size << std::endl;
     file_name << "\\" << std::endl << std::endl;
-
 }
 
 std::vector<double> TransformVectorsToVector(std::vector<std::vector<double>> v) {
@@ -302,3 +353,33 @@ void PrintFile(std::ifstream& reader){
     }
 }
 
+int64_t FindPowerOfTen (int power_of_2) {
+    int64_t power_of_ten = 1;
+    int n = (int) pow(2, power_of_2);
+    while (power_of_ten < n)
+        power_of_ten *= 10;
+    power_of_ten /= 10;
+    return power_of_ten;
+}
+
+/* Map doubles to integer for performing the biometric matching over the integers using BFV
+ *
+ */
+
+std::int64_t MapDoubleToInteger(double x, int64_t scaling_factor, int quantisation_bits) {
+    // int scale = (int)pow(2,bits)/2;
+    // uint64_t scale_int = lround(scale*x+scale);
+    int64_t x_scaled = (int64_t) trunc(x*scaling_factor);
+    int64_t modulus = (int64_t) pow(2,quantisation_bits);
+    int64_t x_scaled_modulo = (modulus + (x_scaled%modulus))%modulus;
+    // return (uint64_t) x_scaled_modulo;
+    return x_scaled_modulo;
+}
+
+std::vector<std::int64_t> MapDoublesToIntegers(std::vector<double> &v_double, int64_t scaling_factor, int quantisation_bits) {
+    std::vector<std::int64_t> v_int;
+    for (int i = 0; i < v_double.size(); ++i) {
+        v_int.push_back(MapDoubleToInteger(v_double[i], scaling_factor, quantisation_bits));
+    }
+    return v_int;
+}

@@ -39,6 +39,25 @@ enc_euclidean_dist(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2,
     }
 }
 
+void
+enc_euclidean_dist_bfv(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2,
+                   seal::Ciphertext &ctdest, seal::BatchEncoder &encoder,
+                   seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys,
+                   const seal::RelinKeys &relin_keys, seal::Decryptor &decryptor) {
+    evaluator.sub(ct1, ct2, ctdest);
+    decrypt_decode_print_bfv(ctdest, encoder, decryptor, "Euclidean distance, ct2 - ct1:");
+    evaluator.square_inplace(ctdest);
+    decrypt_decode_print_bfv(ctdest, encoder, decryptor, "Euclidean distance, ctdest square:");
+    evaluator.relinearize_inplace(ctdest, relin_keys);
+    // evaluator.rescale_to_next_inplace(ctdest);
+    seal::Ciphertext temp_ct;
+    for (size_t i = 1; i < encoder.slot_count() / 2; i <<= 1) {
+        evaluator.rotate_rows(ctdest, i, gal_keys, temp_ct);
+        evaluator.add_inplace(ctdest, temp_ct);
+    }
+    decrypt_decode_print_bfv(ctdest, encoder, decryptor, "Euclidean distance, after sum i.e. final result:");
+}
+
 void enc_final_approx_inplace(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,
                               seal::Decryptor &decryptor,
                               seal::Evaluator &evaluator,
@@ -527,6 +546,22 @@ void decrypt_decode_print(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,
     int until = 10;
     seal::Plaintext tmp_pt;
     std::vector<double> tmp;
+    decryptor.decrypt(ct, tmp_pt);
+    encoder.decode(tmp_pt, tmp);
+    std::cout << "[ ";
+    for (int i = 0; i < until; i++) {
+        std::cout << tmp[i] << ", ";
+    }
+    std::cout << tmp[until] << " ]";
+    std::cout << std::endl << std::endl;
+}
+
+void decrypt_decode_print_bfv(seal::Ciphertext &ct, seal::BatchEncoder &encoder,
+                          seal::Decryptor &decryptor, std::string message) {
+    std::cout << message << std::endl;
+    int until = 128;
+    seal::Plaintext tmp_pt;
+    std::vector<int64_t> tmp;
     decryptor.decrypt(ct, tmp_pt);
     encoder.decode(tmp_pt, tmp);
     std::cout << "[ ";

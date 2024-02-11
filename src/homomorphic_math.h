@@ -15,6 +15,12 @@ enc_euclidean_dist(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2,
                    seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys,
                    const seal::RelinKeys &relin_keys, const double scale);
 
+void
+enc_euclidean_dist_bfv(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2,
+                   seal::Ciphertext &ctdest, seal::BatchEncoder &encoder,
+                   seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys,
+                   const seal::RelinKeys &relin_keys, seal::Decryptor &decryptor);
+
 void enc_final_approx_inplace(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,
                               seal::Decryptor &decryptor,
                               seal::Evaluator &evaluator,
@@ -61,6 +67,9 @@ void enc_g4(seal::Ciphertext &ct_x, seal::Ciphertext &ctdest,
             const seal::RelinKeys &relin_keys, const double scale);
 
 void decrypt_decode_print(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,
+                          seal::Decryptor &decryptor, std::string message);
+
+void decrypt_decode_print_bfv(seal::Ciphertext &ct, seal::BatchEncoder &encoder,
                           seal::Decryptor &decryptor, std::string message);
 
 #endif //THREATS_SEAL_HOMOMORPHIC_MATH_H

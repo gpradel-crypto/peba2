@@ -2,7 +2,8 @@ import os
 import face_recognition
 import time
 
-directory = 'pictures'
+directory = 'pictures/'
+# directory_images = '/home/gpra/Images/img_celeba.7z'
 
 # start the clock
 start_time = time.time()
@@ -12,11 +13,13 @@ cnt = 0
 fail = 0
 
 
+# for filename in os.listdir(directory_images):
 for filename in os.listdir(directory):
     print(filename)
     if (filename == '.gitkeep'):
         # print('I got out of the loop')
         continue
+    # f = os.path.join(directory_images, filename)
     f = os.path.join(directory, filename)
     # checking if it is a file
     if os.path.isfile(f):

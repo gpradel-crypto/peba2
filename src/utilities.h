@@ -56,13 +56,16 @@ private:
 
 
 void PrintVector(std::vector<double> vect);
+void PrintVectorInt(std::vector<int64_t> vect);
 void PrintVectorUntilN(std::vector<double> vect, int n);
+void PrintVectorIntUntilN(std::vector<int64_t> vect, int n);
 void PrintVectorFile(std::vector<double> vect, std::ofstream& file_name);
 void PrintVector2(std::vector<std::vector<double>> vect);
+void PrintVector2Int(std::vector<std::vector<uint64_t>> vect);
 void PrintVector2UntilN(std::vector<std::vector<double>> vect, int n);
 void PrintVector2File(std::vector<std::vector<double>> vect, std::ofstream& file_name);
 void PrintVector2FileUntilN(std::vector<std::vector<double>> vect, std::ofstream& file_name, int n);
-void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale);
+void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale, uint64_t rescaling_factor);
 std::vector<double> TransformVectorsToVector(std::vector<std::vector<double>> v);
 int RandomIndexForImage(int n);
 double RandomDouble(void);
@@ -72,7 +75,9 @@ void FillVectorUntilN(std::vector<double>& input, int dimension, double value);
 std::vector<char> FromFileToVect(std::string filename);
 std::vector<double> ParseEncoding(std::ifstream& reader, std::filesystem::path file_path);
 void PrintFile(std::ifstream& reader);
-
+int64_t FindPowerOfTen (int power_of_2);
+std::int64_t MapDoubleToInteger(double x, int64_t scaling_factor, int quantisation_bits);
+std::vector<std::int64_t> MapDoublesToIntegers(std::vector<double> &v_double, int64_t scaling_factor, int quantisation_bits);
 
 
 #endif //THREATS_SEAL_UTILITIES_H

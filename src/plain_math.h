@@ -6,6 +6,8 @@ double manhattan_distance(std::vector<double> v1, std::vector<double> v2);
 
 double euclidean_distance(std::vector<double> v1, std::vector<double> v2);
 
+int64_t euclidean_distance_int(std::vector<int64_t> v1, std::vector<int64_t> v2);
+
 void final_approx_inplace(double& x);
 
 double f1(double x);

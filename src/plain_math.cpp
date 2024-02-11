@@ -4,6 +4,22 @@
 #include <vector>
 #include "plain_math.h"
 
+#include <iostream>
+
+// #include "utilities.h"
+
+void PrintVectorIntAdHoc(std::vector<int64_t> vect) {
+    if (vect.empty()) {
+        perror("Vector empty for print in stdout");
+        abort();
+    }
+    std::cout << "[ ";
+    for (int i = 0; i < 128; i++) {
+        std::cout << vect[i] << ", ";
+    }
+    std::cout << vect[128] << " ]";
+    std::cout << std::endl << std::endl;
+}
 
 double manhattan_distance(std::vector<double> v1, std::vector<double> v2) {
     if (v1.size() != v2.size())
@@ -22,6 +38,34 @@ double euclidean_distance(std::vector<double> v1, std::vector<double> v2) {
     for (int i = 0; i < v1.size(); ++i) {
         result += pow(v2[i] - v1[i], 2);
     }
+    return result;
+}
+
+int64_t euclidean_distance_int(std::vector<int64_t> v1, std::vector<int64_t> v2) {
+    if (v1.size() != v2.size())
+        abort();
+    int64_t result = 0;
+    std::vector<int64_t> intermediate_result;
+    std::vector<int64_t> intermediate_result2;
+    // std::cout << "Vector v1" << std::endl;
+    // PrintVectorIntAdHoc(v1);
+    // std::cout << "Vector v2" << std::endl;
+    // PrintVectorIntAdHoc(v2);
+    for (int i = 0; i < v1.size(); ++i) {
+        intermediate_result.push_back(v2[i] - v1[i]);
+    }
+    // std::cout << "Vector v2 - v1" << std::endl;
+    // PrintVectorIntAdHoc(intermediate_result);
+    for (int i = 0; i < intermediate_result.size(); ++i)
+        intermediate_result2.push_back(pow(intermediate_result[i], 2));
+    // std::cout << "Vector pow(v2 - v1, 2)" << std::endl;
+    // PrintVectorIntAdHoc(intermediate_result2);
+    // for (int i = 0; i < v1.size(); ++i) {
+        // result += pow(v2[i] - v1[i], 2);
+    // }
+    // I don't understand but the operation above simply does not work
+    for (int i = 0; i < v1.size(); ++i)
+        result += intermediate_result2[i];
     return result;
 }
 
