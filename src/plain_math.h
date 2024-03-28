@@ -26,4 +26,6 @@ double g3(double x);
 
 double g4(double x);
 
+int64_t Lagrange_257(int64_t x);
+
 #endif //THREATS_SEAL_PLAIN_MATH_H

@@ -7,7 +7,9 @@ add_executable(peba2 main.cpp src/plain_math.cpp src/plain_math.h src/utilities.
         src/protocol_bfv.cpp
         src/protocol_bfv.h
         src/protocol_ckks.cpp
-        src/protocol_ckks.h)
+        src/protocol_ckks.h
+        src/accuracy.cpp
+        src/accuracy.h)
 
 find_package(SEAL 4.1.1 REQUIRED)
 target_link_libraries(peba2 SEAL::seal)

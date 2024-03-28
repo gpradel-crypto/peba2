@@ -48,10 +48,10 @@ void PrintVectorIntUntilN(std::vector<int64_t> vect, int n) {
         abort();
     }
     std::cout << "[ ";
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n-1; i++) {
         std::cout << vect[i] << ", ";
     }
-    std::cout << vect[n] << " ]";
+    std::cout << vect[n-1] << " ]";
     std::cout << std::endl << std::endl;
 }
 
@@ -176,7 +176,7 @@ void PrintVector2FileUntilN(std::vector<std::vector<double>> vect, std::ofstream
 /*
 Helper function: Prints the parameters in a SEALContext.
 */
-void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale, uint64_t rescaling_factor)
+void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale, int64_t scaling_factor)
 {
     auto &context_data = *context.key_context_data();
 
@@ -192,6 +192,9 @@ void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_n
         case seal::scheme_type::ckks:
             scheme_name = "CKKS";
             break;
+        case seal::scheme_type::bgv:
+            scheme_name = "BGV";
+            break;
         default:
             throw std::invalid_argument("unsupported scheme");
     }
@@ -199,10 +202,6 @@ void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_n
     file_name << "| Encryption parameters :" << std::endl;
     file_name << "|   scheme: " << scheme_name << std::endl;
     file_name << "|   poly_modulus_degree: " << context_data.parms().poly_modulus_degree() << std::endl;
-
-    /*
-    Print the size of the true (product) coefficient modulus.
-    */
     file_name << "|   Maximum allowed bits: " <<  seal::CoeffModulus::MaxBitCount(context_data.parms().poly_modulus_degree()) << std::endl;
     file_name << "|   coeff_modulus size: ";
     file_name << context_data.total_coeff_modulus_bit_count() << " (";
@@ -214,15 +213,20 @@ void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_n
     }
     file_name << coeff_modulus.back().bit_count();
     file_name << ") bits" << std::endl;
+
+    /*
+     * Print slots number and scale for the CKKS scheme
+     */
     if (context_data.parms().scheme() == seal::scheme_type::ckks) {
         seal::CKKSEncoder encoder(context);
         size_t slot_count = encoder.slot_count();
         file_name << "|   Number of slots (dimension of vectors): " << slot_count << std::endl;
         file_name << "|    Scale: 2^" << power_of_scale << std::endl;
+        file_name << "|    Number of rescaling allowed: " << coeff_modulus_size << std::endl;
     }
 
     /*
-    For the BFV scheme print the plain_modulus parameter.
+    For the BFV scheme print the plain_modulus parameters.
     */
     if (context_data.parms().scheme() == seal::scheme_type::bfv)
     {
@@ -230,10 +234,16 @@ void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_n
         seal::BatchEncoder encoder(context);
         size_t slot_count = encoder.slot_count();
         file_name << "|   Number of slots (dimension of vectors): " << slot_count << std::endl;
-        file_name << "|   Rescaling factor: " << rescaling_factor << std::endl;
+        file_name << "|   Rescaling factor: " << scaling_factor << std::endl;
     }
 
-    file_name << "|    Number of rescaling allowed: " << coeff_modulus_size << std::endl;
+    /*
+    For the BGV scheme need to print the plain_modulus parameters. TO BE DONE
+    */
+    if (context_data.parms().scheme() == seal::scheme_type::bgv)
+    {
+        //empty for now
+    }
     file_name << "\\" << std::endl << std::endl;
 }
 
@@ -260,6 +270,14 @@ double RandomDouble(void) {
     std::uniform_real_distribution<double> distrib(LOWER_BOUND, UPPER_BOUND);
     return distrib(engine);
 }
+
+int64_t RandomLongInt(void) {
+    std::random_device rd;
+    std::default_random_engine engine(rd());
+    std::uniform_int_distribution<int64_t> distrib(LOWER_BOUND_INT, UPPER_BOUND_INT);
+    return distrib(engine);
+}
+
 
 std::vector<double> CreateVectorInput(size_t dimension) {
     std::vector<double> results;
@@ -356,9 +374,9 @@ void PrintFile(std::ifstream& reader){
 int64_t FindPowerOfTen (int power_of_2) {
     int64_t power_of_ten = 1;
     int n = (int) pow(2, power_of_2);
-    while (power_of_ten < n)
+    while (power_of_ten*10 < n)
         power_of_ten *= 10;
-    power_of_ten /= 10;
+    // power_of_ten /= 10;
     return power_of_ten;
 }
 
@@ -366,20 +384,64 @@ int64_t FindPowerOfTen (int power_of_2) {
  *
  */
 
-std::int64_t MapDoubleToInteger(double x, int64_t scaling_factor, int quantisation_bits) {
-    // int scale = (int)pow(2,bits)/2;
-    // uint64_t scale_int = lround(scale*x+scale);
-    int64_t x_scaled = (int64_t) trunc(x*scaling_factor);
-    int64_t modulus = (int64_t) pow(2,quantisation_bits);
-    int64_t x_scaled_modulo = (modulus + (x_scaled%modulus))%modulus;
-    // return (uint64_t) x_scaled_modulo;
-    return x_scaled_modulo;
+std::int64_t MapDoubleToInteger(double x, int64_t scaling_factor) {
+    int64_t x_scaled_truncated = (int64_t) trunc(x*scaling_factor);
+    // int64_t x_scaled_truncated_int64 = (int64_t) x_scaled_truncated;
+    return x_scaled_truncated;
 }
 
-std::vector<std::int64_t> MapDoublesToIntegers(std::vector<double> &v_double, int64_t scaling_factor, int quantisation_bits) {
+std::vector<std::int64_t> MapDoublesToIntegers(std::vector<double> &v_double, int64_t scaling_factor) {
     std::vector<std::int64_t> v_int;
     for (int i = 0; i < v_double.size(); ++i) {
-        v_int.push_back(MapDoubleToInteger(v_double[i], scaling_factor, quantisation_bits));
+        v_int.push_back(MapDoubleToInteger(v_double[i], scaling_factor));
     }
     return v_int;
 }
+
+void decrypt_decode_print_bfv_adhoc(seal::Ciphertext &ct, seal::BatchEncoder &encoder,
+                          seal::Decryptor &decryptor, std::string message) {
+    std::cout << message << std::endl;
+    int until = 128;
+    seal::Plaintext tmp_pt;
+    std::vector<int64_t> tmp;
+    decryptor.decrypt(ct, tmp_pt);
+    encoder.decode(tmp_pt, tmp);
+    std::cout << "[ ";
+    for (int i = 0; i < until; i++) {
+        std::cout << tmp[i] << ", ";
+    }
+    std::cout << tmp[until] << " ]";
+    std::cout << std::endl << std::endl;
+}
+
+void test_how_many_bits_precision_left_BFV(seal::Ciphertext &ct, seal::Decryptor &decryptor, seal::Evaluator &evaluator, seal::BatchEncoder &encoder, seal::Encryptor &encryptor) {
+    std::vector<int64_t> tmp(128, 2);
+    seal::Plaintext tmp_pt;
+    encoder.encode(tmp, tmp_pt);
+    seal::Ciphertext tmp_ct;
+    encryptor.encrypt(tmp_pt, tmp_ct);
+    for (int i = 0; i < 20; i++) {
+        std::cout << "Round " << i+1 << std::endl;
+        decrypt_decode_print_bfv_adhoc(ct, encoder, decryptor, "The ciphertext decrypted is equal to: :");
+        std::cout << " Noise budget in the ciphertext on Round: " << i+1 << "  " << decryptor.invariant_noise_budget(ct) << " bits" << std::endl;
+        evaluator.multiply_plain_inplace(ct, tmp_pt);
+    }
+}
+
+// char* int64ToChar(int64_t n) {
+//     char* result = (char*) malloc(sizeof(int64_t));
+//     memcpy(result, &n, 8);
+//     return result;
+// }
+//
+// int64_t charTo64bitNum(char a[]) {
+//     int64_t n = 0;
+//     memcpy(&n, a, 8);
+//     return n;
+// }
+//
+// void vector_int64_to_char(char a[], std::vector<int64_t> vect_n) {
+//     for (int i = 0; i < vect_n.size(); ++i) {
+//         a += int64ToChar(vect_n[i]);
+//     }
+// }

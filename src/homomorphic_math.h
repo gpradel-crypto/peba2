@@ -19,7 +19,7 @@ void
 enc_euclidean_dist_bfv(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2,
                    seal::Ciphertext &ctdest, seal::BatchEncoder &encoder,
                    seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys,
-                   const seal::RelinKeys &relin_keys, seal::Decryptor &decryptor);
+                   const seal::RelinKeys &relin_keys);
 
 void enc_final_approx_inplace(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,
                               seal::Decryptor &decryptor,

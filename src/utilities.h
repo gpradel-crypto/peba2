@@ -9,6 +9,8 @@
 
 constexpr double LOWER_BOUND = -1.0;
 constexpr double UPPER_BOUND = 1.0;
+constexpr int64_t LOWER_BOUND_INT = 1;
+constexpr int64_t UPPER_BOUND_INT = 33554432; // maximum of 2**25
 
 enum Unit {
     microsecs,
@@ -65,10 +67,11 @@ void PrintVector2Int(std::vector<std::vector<uint64_t>> vect);
 void PrintVector2UntilN(std::vector<std::vector<double>> vect, int n);
 void PrintVector2File(std::vector<std::vector<double>> vect, std::ofstream& file_name);
 void PrintVector2FileUntilN(std::vector<std::vector<double>> vect, std::ofstream& file_name, int n);
-void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale, uint64_t rescaling_factor);
+void PrintParametersSEAL(const seal::SEALContext &context, std::ofstream& file_name, int power_of_scale, int64_t scaling_factor);
 std::vector<double> TransformVectorsToVector(std::vector<std::vector<double>> v);
 int RandomIndexForImage(int n);
 double RandomDouble(void);
+int64_t RandomLongInt(void);
 std::vector<double> CreateVectorInput(size_t dimension);
 std::vector<double> CreateVectorInputChosen(size_t dimension, double value);
 void FillVectorUntilN(std::vector<double>& input, int dimension, double value);
@@ -76,8 +79,7 @@ std::vector<char> FromFileToVect(std::string filename);
 std::vector<double> ParseEncoding(std::ifstream& reader, std::filesystem::path file_path);
 void PrintFile(std::ifstream& reader);
 int64_t FindPowerOfTen (int power_of_2);
-std::int64_t MapDoubleToInteger(double x, int64_t scaling_factor, int quantisation_bits);
-std::vector<std::int64_t> MapDoublesToIntegers(std::vector<double> &v_double, int64_t scaling_factor, int quantisation_bits);
-
-
+std::int64_t MapDoubleToInteger(double x, int64_t scaling_factor);
+std::vector<std::int64_t> MapDoublesToIntegers(std::vector<double> &v_double, int64_t scaling_factor);
+void test_how_many_bits_precision_left_BFV(seal::Ciphertext &ct, seal::Decryptor &decryptor, seal::Evaluator &evaluator, seal::BatchEncoder &encoder, seal::Encryptor &encryptor);
 #endif //THREATS_SEAL_UTILITIES_H

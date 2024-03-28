@@ -43,11 +43,9 @@ void
 enc_euclidean_dist_bfv(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2,
                    seal::Ciphertext &ctdest, seal::BatchEncoder &encoder,
                    seal::Evaluator &evaluator, const seal::GaloisKeys &gal_keys,
-                   const seal::RelinKeys &relin_keys, seal::Decryptor &decryptor) {
+                   const seal::RelinKeys &relin_keys) {
     evaluator.sub(ct1, ct2, ctdest);
-    decrypt_decode_print_bfv(ctdest, encoder, decryptor, "Euclidean distance, ct2 - ct1:");
     evaluator.square_inplace(ctdest);
-    decrypt_decode_print_bfv(ctdest, encoder, decryptor, "Euclidean distance, ctdest square:");
     evaluator.relinearize_inplace(ctdest, relin_keys);
     // evaluator.rescale_to_next_inplace(ctdest);
     seal::Ciphertext temp_ct;
@@ -55,7 +53,6 @@ enc_euclidean_dist_bfv(const seal::Ciphertext &ct1, const seal::Ciphertext &ct2,
         evaluator.rotate_rows(ctdest, i, gal_keys, temp_ct);
         evaluator.add_inplace(ctdest, temp_ct);
     }
-    decrypt_decode_print_bfv(ctdest, encoder, decryptor, "Euclidean distance, after sum i.e. final result:");
 }
 
 void enc_final_approx_inplace(seal::Ciphertext &ct, seal::CKKSEncoder &encoder,

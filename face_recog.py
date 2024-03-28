@@ -3,7 +3,7 @@ import face_recognition
 import time
 
 directory = 'pictures/'
-# directory_images = '/home/gpra/Images/img_celeba.7z'
+directory_images = 'celeba/'
 
 # start the clock
 start_time = time.time()
@@ -13,14 +13,14 @@ cnt = 0
 fail = 0
 
 
-# for filename in os.listdir(directory_images):
-for filename in os.listdir(directory):
+for filename in os.listdir(directory_images):
+# for filename in os.listdir(directory):
     print(filename)
     if (filename == '.gitkeep'):
         # print('I got out of the loop')
         continue
-    # f = os.path.join(directory_images, filename)
-    f = os.path.join(directory, filename)
+    f = os.path.join(directory_images, filename)
+    # f = os.path.join(directory, filename)
     # checking if it is a file
     if os.path.isfile(f):
         image = face_recognition.load_image_file(f)
@@ -35,6 +35,7 @@ for filename in os.listdir(directory):
         # encoding.tolist()
         # format_encoding = ["{},".format(i) for i in encoding]
         file_path = "pict_arrays/encoding_"
+        # file_path = "celeba_arrays/"
         file_path = file_path + filename
         file_path = file_path + ".data"
         with open(file_path, 'w') as fp:

@@ -3,7 +3,9 @@
 The PEBA2 protocol is a privacy-preserving authentication protocol based on biometrics and homomorphic encryption (HE).
 PEBA2 is [Apache licensed](https://github.com/lab-incert/peba-seal/blob/main/LICENSE) and has been developed by Gaëtan Pradel, member of the R&D Department of [INCERT](https://www.incert.lu/), based in Luxembourg and PhD Candidate at the Information Security Group in Royal Holloway, University of London under the supervision of [Prof. Chris Mitchell](https://www.chrismitchell.net/).
 
-In PEBA2, the HE scheme used is CKKS [1] as implemented by Microsoft in their open-source library Microsoft SEAL [2].
+In PEBA2, the HE schemes used are CKKS [1] and BFV [5,6] as implemented by Microsoft in their open-source library Microsoft SEAL [2].
+
+Current version: 1.1
 
 ## Dependencies
 
@@ -37,3 +39,7 @@ To test our code, we used the Large-scale CelebFaces Attributes ([CelebA](https:
 [3] https://github.com/ageitgey/face_recognition
 
 [4] Ziwei Liu, Ping Luo, Xiaogang Wang, and Xiaoou Tang, *Deep Learning Face Attributes in the Wild*, 2015, Proceedings of International Conference on Computer Vision (ICCV)
+
+[5] Z. Brakerski. Fully homomorphic encryption without modulus switching from classical gapsvp. In Advances in Cryptology — CRYPTO 2012 — 32nd Annual Cryptology Conference, Santa Barbara, CA, USA, August 19–23, 2012. Proceedings, pages 868–886, 2012.
+
+[6] J. Fan and F. Vercauteren. Somewhat practical fully homomorphic encryption. Cryptology ePrint Archive, Paper 2012/144, 2012. https://eprint.iacr.org/2012/144.
