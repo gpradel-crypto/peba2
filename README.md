@@ -7,6 +7,12 @@ In PEBA2, the HE schemes used are CKKS [1] and BFV [5,6] as implemented by Micro
 
 Current version: 1.1
 
+
+| Version      |                       Description                          | Date of release |
+|--------------|------------------------------------------------------------|-----------------|
+| 1.1          | Addition of the implementation of PEBA2 using BFV          |   27 March 2024 |
+| 1.0          | Initial version of the implementation of PEBA2 using CKKS. |    19 July 2022 |
+
 ## Dependencies
 
 
